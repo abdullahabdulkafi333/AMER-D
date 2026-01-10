@@ -3,41 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شركة عامر دهيمش - قائمة الأسعار</title>
+    <title>شركة عامر دهيمش - إدارة الأسعار</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
-        body { font-family: 'Cairo', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Cairo', sans-serif; background-color: #f3f4f6; }
         .admin-gradient { background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); }
-        .product-card { transition: all 0.2s; border: 1px solid #e2e8f0; }
-        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; justify-content:center; align-items:center; cursor: zoom-out; }
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; justify-content:center; align-items:center; p: 4; }
     </style>
 </head>
-<body>
+<body class="pb-20">
 
-    <header class="admin-gradient text-white p-8 shadow-lg sticky top-0 z-50 text-center">
-        <h1 class="text-3xl md:text-4xl font-extrabold">شركة عامر دهيمش</h1>
-        <button onclick="loginAdmin()" class="mt-3 text-[10px] bg-white/10 px-4 py-1 rounded-full border border-white/20">لوحة التحكم</button>
+    <header class="admin-gradient text-white pt-10 pb-12 px-6 shadow-xl text-center relative">
+        <h1 class="text-3xl md:text-4xl font-extrabold mb-2">شركة عامر دهيمش</h1>
+        <p class="text-indigo-100 text-sm opacity-80">قائمة الأصناف والأسعار المحدثة</p>
+        
+        <button onclick="toggleAdminPanel()" class="absolute top-4 left-4 bg-white/20 hover:bg-white/30 p-2 rounded-full transition-all border border-white/10">
+            ⚙️
+        </button>
     </header>
 
-    <div class="container mx-auto p-4 max-w-3xl">
-        <input type="text" id="searchInput" onkeyup="search()" placeholder="ابحث عن صنف..." class="w-full p-4 rounded-2xl shadow-sm mb-6 outline-none focus:ring-2 focus:ring-indigo-600">
-
-        <div id="adminPanel" class="hidden bg-white p-6 rounded-3xl shadow-xl border-2 border-indigo-600 mb-8">
-            <h2 class="text-lg font-bold mb-4">إضافة أصناف (تحديث يدوي لسوريا)</h2>
-            <div class="grid grid-cols-1 gap-4">
-                <input type="text" id="itemName" placeholder="اسم الصنف" class="p-3 border rounded-xl">
-                <input type="text" id="itemPack" placeholder="التعبئة" class="p-3 border rounded-xl">
-                <input type="text" id="itemPrice" placeholder="السعر" class="p-3 border rounded-xl font-bold">
-                <input type="file" id="itemFile" accept="image/*" class="p-2 border rounded-xl text-xs">
-            </div>
-            <button onclick="addItem()" class="mt-4 w-full bg-green-600 text-white py-3 rounded-xl font-bold">إضافة للقائمة</button>
-            
-            <div class="mt-6">
-                <p class="text-xs text-red-600 font-bold mb-2">انسخ الكود أدناه بالكامل وضعه في ملف data.json على GitHub:</p>
-                <textarea id="outputJson" class="w-full h-32 p-2 border text-[10px] font-mono bg-gray-50" readonly></textarea>
-                <button onclick="copyJson()" class="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm w-full">نسخ البيانات لتحديث الموقع</button>
-            </div>
+    <div class="container mx-auto p-4 max-w-2xl -mt-8">
+        <div class="relative mb-6 shadow-lg rounded-2xl overflow-hidden">
+            <input type="text" id="searchInput" onkeyup="search()" placeholder="ابحث عن صنف..." 
+                   class="w-full p-4 pr-12 outline-none border-none text-md font-semibold">
+            <span class="absolute right-4 top-4 grayscale opacity-50">🔍</span>
         </div>
 
         <div id="grid" class="flex flex-col gap-3">
@@ -45,69 +36,171 @@
         </div>
     </div>
 
-    <div id="modal" class="modal-overlay" onclick="this.style.display='none'"><img id="zoomImg" src="" class="max-w-[95%] max-h-[85%] rounded-lg"></div>
+    <div id="adminPanel" class="modal-overlay overflow-y-auto">
+        <div class="glass-effect w-full max-w-md p-6 rounded-3xl shadow-2xl relative animate-in fade-in zoom-in duration-300">
+            <button onclick="toggleAdminPanel()" class="absolute top-4 left-4 text-gray-400 hover:text-black text-xl">✕</button>
+            
+            <h2 class="text-xl font-800 text-indigo-900 mb-6 border-b pb-2">لوحة الإدارة الذكية</h2>
+            
+            <div class="space-y-4">
+                <input type="hidden" id="editIndex" value="-1">
+                <div>
+                    <label class="text-[11px] font-bold text-gray-500 mr-2">اسم الصنف</label>
+                    <input type="text" id="itemName" class="w-full p-3 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-500 mr-2">التعبئة</label>
+                        <input type="text" id="itemPack" class="w-full p-3 bg-gray-100 border-none rounded-xl">
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-500 mr-2">السعر</label>
+                        <input type="text" id="itemPrice" class="w-full p-3 bg-indigo-50 border-none rounded-xl font-bold text-indigo-700">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-gray-500 mr-2">صورة المنتج</label>
+                    <input type="file" id="itemFile" accept="image/*" class="w-full text-xs p-2 bg-gray-100 rounded-xl">
+                </div>
+                
+                <button onclick="saveItem()" id="mainBtn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all">
+                    إضافة / تحديث الصنف
+                </button>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <p class="text-[10px] text-red-500 font-bold mb-2">للحفظ الدائم: انسخ النص أدناه وضعه في ملف data.json</p>
+                <textarea id="outputJson" onclick="this.select()" class="w-full h-24 p-2 text-[9px] font-mono bg-black text-green-400 rounded-xl border-none outline-none" readonly></textarea>
+                <button onclick="copyData()" class="mt-3 w-full bg-gray-800 text-white py-2 rounded-xl text-xs font-bold">نسخ كود المزامنة 📋</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalImg" class="modal-overlay" onclick="this.style.display='none'">
+        <img id="zoomImg" src="" class="max-w-[95%] max-h-[85%] rounded-2xl border-4 border-white shadow-2xl">
+    </div>
 
     <script>
         let products = [];
-        
-        // جلب البيانات من ملف data.json (يعمل في سوريا بدون حجب)
+        let currentImgBase64 = "";
+
+        // جلب البيانات من ملف data.json الخاص بك
         fetch('data.json?t=' + Date.now())
-            .then(response => response.json())
-            .then(data => {
-                products = data;
-                renderUI();
-            }).catch(() => {
-                document.getElementById('grid').innerHTML = '<p class="text-center py-10">لا يوجد بيانات مضافة بعد.</p>';
-            });
+            .then(res => res.json())
+            .then(data => { products = data; renderUI(); })
+            .catch(() => { document.getElementById('grid').innerHTML = '<p class="text-center py-10 opacity-50">لم يتم إضافة بيانات بعد</p>'; });
+
+        // معالجة ملف الصورة
+        document.getElementById('itemFile').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function() { currentImgBase64 = reader.result; };
+            if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+        });
 
         function renderUI() {
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             products.forEach((item, index) => {
                 grid.innerHTML += `
-                    <div class="product-card bg-white p-3 rounded-2xl flex items-center gap-4">
-                        <img src="${item.img}" onclick="zoom('${item.img}')" class="w-20 h-20 object-cover rounded-xl cursor-zoom-in border">
+                    <div class="bg-white p-3 rounded-2xl shadow-sm flex items-center gap-4 border border-gray-100 product-card relative overflow-hidden">
+                        <img src="${item.img}" onclick="zoom('${item.img}')" class="w-20 h-20 object-cover rounded-xl bg-gray-50 border cursor-zoom-in">
                         <div class="flex-grow">
-                            <h3 class="text-[15px] font-bold text-gray-800">${item.name}</h3>
-                            <span class="text-[11px] font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200">${item.pack}</span>
+                            <h3 class="text-[14px] font-bold text-gray-800 mb-1 leading-tight">${item.name}</h3>
+                            <span class="text-[11px] font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200">${item.pack}</span>
                         </div>
-                        <div class="text-left"><span class="text-xl font-black text-indigo-700">${item.price}</span></div>
+                        <div class="text-left flex flex-col items-end gap-1">
+                            <span class="text-xl font-black text-indigo-700">${item.price}</span>
+                            <div class="admin-controls hidden flex gap-2">
+                                <button onclick="editItem(${index})" class="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded-md border border-blue-100">تعديل ✏️</button>
+                                <button onclick="deleteItem(${index})" class="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded-md border border-red-100">حذف 🗑️</button>
+                            </div>
+                        </div>
                     </div>`;
             });
             document.getElementById('outputJson').value = JSON.stringify(products);
         }
 
-        function addItem() {
-            const file = document.getElementById('itemFile').files[0];
+        function saveItem() {
             const name = document.getElementById('itemName').value;
             const pack = document.getElementById('itemPack').value;
             const price = document.getElementById('itemPrice').value;
-            if (!file || !name) return alert("أكمل البيانات");
+            const editIdx = parseInt(document.getElementById('editIndex').value);
 
-            const reader = new FileReader();
-            reader.onload = function() {
-                products.push({ name, pack, price, img: reader.result });
-                renderUI();
-                alert("تمت الإضافة للقائمة المؤقتة. لا تنسَ نسخ البيانات وتحديث GitHub.");
+            if(!name || !price) return alert("الاسم والسعر مطلوبان!");
+
+            const newItem = { 
+                name, pack, price, 
+                img: currentImgBase64 || (editIdx > -1 ? products[editIdx].img : "") 
             };
-            reader.readAsDataURL(file);
+
+            if(!newItem.img) return alert("الرجاء اختيار صورة!");
+
+            if(editIdx > -1) products[editIdx] = newItem;
+            else products.push(newItem);
+
+            resetForm();
+            renderUI();
+            alert("تم التحديث مؤقتاً.. انسخ الكود من الأسفل لتحديث الموقع نهائياً.");
         }
 
-        function copyJson() {
+        function editItem(index) {
+            const item = products[index];
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('itemPack').value = item.pack;
+            document.getElementById('itemPrice').value = item.price;
+            document.getElementById('editIndex').value = index;
+            document.getElementById('mainBtn').innerText = "تحديث بيانات الصنف";
+            toggleAdminPanel();
+        }
+
+        function deleteItem(index) {
+            if(confirm("هل تريد بالتأكيد حذف هذا الصنف؟")) {
+                products.splice(index, 1);
+                renderUI();
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemPack').value = '';
+            document.getElementById('itemPrice').value = '';
+            document.getElementById('editIndex').value = '-1';
+            document.getElementById('mainBtn').innerText = "إضافة صنف جديد";
+            currentImgBase64 = "";
+        }
+
+        function toggleAdminPanel() {
+            const panel = document.getElementById('adminPanel');
+            const isHidden = panel.style.display === "none" || panel.style.display === "";
+            panel.style.display = isHidden ? "flex" : "none";
+            
+            // إظهار/إخفاء أزرار التعديل والحذف بناءً على كلمة السر
+            if(isHidden) {
+                const pass = prompt("رمز الإدارة لشركة عامر دهيمش:");
+                if(pass !== "admin123") {
+                    panel.style.display = "none";
+                    alert("الرمز خاطئ!");
+                } else {
+                    document.querySelectorAll('.admin-controls').forEach(el => el.classList.remove('hidden'));
+                }
+            }
+        }
+
+        function copyData() {
             const text = document.getElementById('outputJson');
             text.select();
             document.execCommand('copy');
-            alert("تم النسخ! الآن اذهب لـ GitHub وافتح ملف data.json والصق البيانات هناك.");
+            alert("تم النسخ! اذهب لملف data.json في GitHub واستبدل محتواه بهذا النص ليرى الزبائن التغييرات.");
         }
 
-        function zoom(src) { document.getElementById('zoomImg').src = src; document.getElementById('modal').style.display = 'flex'; }
+        function zoom(src) { document.getElementById('zoomImg').src = src; document.getElementById('modalImg').style.display = 'flex'; }
+        
         function search() {
             let q = document.getElementById('searchInput').value.toLowerCase();
             document.querySelectorAll('.product-card').forEach(c => {
                 c.style.display = c.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
             });
         }
-        function loginAdmin() { if(prompt("رمز الإدارة:") === "admin123") document.getElementById('adminPanel').classList.toggle('hidden'); }
     </script>
 </body>
 </html>
