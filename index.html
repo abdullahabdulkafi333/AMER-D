@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة الأسعار السحابي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; }
+        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; justify-content:center; align-items:center; cursor: zoom-out; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <header class="bg-indigo-800 text-white p-6 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">قائمة الأسعار المباشرة</h1>
+            <button onclick="loginAdmin()" class="bg-indigo-700 hover:bg-indigo-600 px-4 py-2 rounded text-sm transition">لوحة التحكم</button>
+        </div>
+    </header>
+
+    <div class="container mx-auto p-4 md:p-8">
+        <div class="max-w-xl mx-auto mb-10">
+            <input type="text" id="searchInput" onkeyup="search()" placeholder="🔍 ابحث عن اسم المنتج..." 
+                   class="w-full p-4 rounded-full shadow-lg border-none focus:ring-4 focus:ring-indigo-300 outline-none text-lg">
+        </div>
+
+        <div id="adminPanel" class="hidden bg-white p-6 rounded-2xl shadow-xl border-2 border-indigo-500 mb-10 overflow-hidden animate-pulse-once">
+            <h2 class="text-xl font-bold mb-6 text-indigo-800 border-b pb-2">إضافة منتج جديد (إدارة)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <input type="text" id="itemName" placeholder="اسم المنتج" class="p-3 border rounded-lg focus:border-indigo-500 outline-none">
+                <input type="text" id="itemPack" placeholder="التعبئة (مثلاً: 12 حبة)" class="p-3 border rounded-lg focus:border-indigo-500 outline-none">
+                <input type="text" id="itemPrice" placeholder="السعر" class="p-3 border rounded-lg focus:border-indigo-500 outline-none">
+                <input type="file" id="itemFile" accept="image/*" class="p-3 border rounded-lg bg-gray-50 cursor-pointer">
+            </div>
+            <div class="flex gap-2 mt-6">
+                <button onclick="uploadData()" id="saveBtn" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-bold transition flex-1">حفظ ونشر التعديلات</button>
+                <button onclick="logoutAdmin()" class="bg-gray-200 text-gray-700 px-4 py-3 rounded-xl hover:bg-gray-300 transition">خروج</button>
+            </div>
+        </div>
+
+        <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            </div>
+    </div>
+
+    <div id="modal" class="modal-overlay" onclick="this.style.display='none'">
+        <img id="zoomImg" src="" class="max-w-[95%] max-h-[95%] rounded-lg shadow-2xl transition-transform duration-300">
+    </div>
+
+    <script>
+        // إعدادات Firebase - استبدل هذه البيانات ببيانات مشروعك
+        const firebaseConfig = {
+            apiKey: "ضع_هنا_API_KEY",
+            databaseURL: "ضع_هنا_DATABASE_URL",
+            projectId: "ضع_هنا_PROJECT_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // تحميل البيانات من السحابة وتحديثها فورياً
+        db.ref('products').on('value', (snapshot) => {
+            const data = snapshot.val();
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            for (let id in data) {
+                const item = data[id];
+                grid.innerHTML += `
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition duration-300 product-card" data-name="${item.name}">
+                        <div class="relative group">
+                            <img src="${item.img}" onclick="zoom('${item.img}')" class="w-full h-56 object-cover cursor-zoom-in transition group-hover:scale-105">
+                            <div class="absolute top-2 right-2 bg-white/80 px-3 py-1 rounded-full text-xs font-bold text-indigo-900 shadow-sm">${item.pack}</div>
+                        </div>
+                        <div class="p-5">
+                            <h3 class="text-lg font-bold text-gray-800 mb-1">${item.name}</h3>
+                            <div class="flex justify-between items-end">
+                                <span class="text-2xl font-black text-indigo-600">${item.price}</span>
+                                <button onclick="deleteItem('${id}')" class="admin-only hidden bg-red-50 hover:bg-red-100 text-red-500 p-2 rounded-lg transition">حذف</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            checkAdmin();
+        });
+
+        // وظيفة الرفع
+        function uploadData() {
+            const file = document.getElementById('itemFile').files[0];
+            const name = document.getElementById('itemName').value;
+            const pack = document.getElementById('itemPack').value;
+            const price = document.getElementById('itemPrice').value;
+
+            if (!file || !name || !price) return alert("يرجى ملء كافة البيانات واختيار صورة!");
+
+            const btn = document.getElementById('saveBtn');
+            btn.innerText = "جاري الرفع...";
+            btn.disabled = true;
+
+            const reader = new FileReader();
+            reader.onload = function() {
+                db.ref('products').push({
+                    name: name,
+                    pack: pack,
+                    price: price,
+                    img: reader.result
+                }).then(() => {
+                    btn.innerText = "حفظ ونشر التعديلات";
+                    btn.disabled = false;
+                    document.getElementById('itemName').value = '';
+                    document.getElementById('itemPrice').value = '';
+                    document.getElementById('itemFile').value = '';
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // الوظائف المساعدة
+        function zoom(src) {
+            document.getElementById('zoomImg').src = src;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function search() {
+            let q = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('.product-card').forEach(c => {
+                c.style.display = c.getAttribute('data-name').toLowerCase().includes(q) ? 'block' : 'none';
+            });
+        }
+
+        function loginAdmin() {
+            let p = prompt("أدخل كلمة مرور الإدارة:");
+            if(p === "admin123") {
+                localStorage.setItem('isAdmin', 'true');
+                checkAdmin();
+            } else { alert("كلمة مرور خاطئة!"); }
+        }
+
+        function logoutAdmin() {
+            localStorage.removeItem('isAdmin');
+            location.reload();
+        }
+
+        function checkAdmin() {
+            if(localStorage.getItem('isAdmin') === 'true') {
+                document.getElementById('adminPanel').classList.remove('hidden');
+                document.querySelectorAll('.admin-only').forEach(e => e.classList.remove('hidden'));
+            }
+        }
+
+        function deleteItem(id) {
+            if(confirm('هل أنت متأكد من حذف هذا الصنف نهائياً؟')) db.ref('products/' + id).remove();
+        }
+    </script>
+</body>
+</html>
