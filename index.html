@@ -9,10 +9,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap');
-        body { font-family: 'Cairo', sans-serif; background-color: #f4f7f6; }
+        body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; }
         .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; justify-content:center; align-items:center; cursor: zoom-out; }
         .admin-gradient { background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%); }
-        .product-card:hover img { transform: scale(1.1); }
+        .list-item { transition: all 0.2s ease; border-right: 4px solid transparent; }
+        .list-item:hover { border-right-color: #3730a3; background-color: #f1f5f9; }
     </style>
 </head>
 <body>
@@ -21,61 +22,47 @@
         <div class="container mx-auto">
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight">شركة عامر دهيمش</h1>
             <div class="mt-4">
-                <button onclick="loginAdmin()" class="text-xs bg-white/10 hover:bg-white/20 px-4 py-1 rounded-full transition border border-white/10">دخول الإدارة</button>
+                <button onclick="loginAdmin()" class="text-xs bg-white/10 hover:bg-white/20 px-4 py-1 rounded-full border border-white/10 transition">دخول الإدارة</button>
             </div>
         </div>
     </header>
 
-    <div class="container mx-auto p-4 md:p-10">
-        <div class="max-w-2xl mx-auto mb-12">
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <div class="mb-8">
             <div class="relative">
-                <input type="text" id="searchInput" onkeyup="search()" placeholder="البحث عن صنف معين..." 
-                       class="w-full p-5 pr-12 rounded-2xl shadow-xl border-none focus:ring-4 focus:ring-indigo-500/30 outline-none text-lg text-gray-700">
-                <span class="absolute left-5 top-5 text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </span>
+                <input type="text" id="searchInput" onkeyup="search()" placeholder="بحث سريع عن صنف..." 
+                       class="w-full p-4 pr-12 rounded-2xl shadow-sm border-none focus:ring-4 focus:ring-indigo-500/20 outline-none text-lg">
+                <span class="absolute right-4 top-4 text-gray-400">🔍</span>
             </div>
         </div>
 
-        <div id="adminPanel" class="hidden bg-white p-8 rounded-3xl shadow-2xl border-2 border-indigo-600 mb-12 overflow-hidden">
-            <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h2 class="text-2xl font-bold text-indigo-900">إضافة صنف جديد</h2>
-                <button onclick="logoutAdmin()" class="text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg transition">تسجيل الخروج</button>
+        <div id="adminPanel" class="hidden bg-white p-6 rounded-2xl shadow-xl border-2 border-indigo-600 mb-10 overflow-hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-indigo-900">إضافة صنف جديد للمخزن</h2>
+                <button onclick="logoutAdmin()" class="text-red-500 text-sm font-bold border border-red-100 px-3 py-1 rounded-lg">خروج</button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div>
-                    <label class="block text-sm font-bold text-gray-600 mb-2">اسم الصنف</label>
-                    <input type="text" id="itemName" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-600 mb-2">التعبئة</label>
-                    <input type="text" id="itemPack" placeholder="مثلاً: كرتون / كيلو" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-600 mb-2">السعر</label>
-                    <input type="text" id="itemPrice" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 text-indigo-600 font-bold">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-600 mb-2">صورة المنتج</label>
-                    <input type="file" id="itemFile" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="itemName" placeholder="اسم المنتج" class="p-3 border rounded-xl outline-none focus:border-indigo-500">
+                <input type="text" id="itemPack" placeholder="نوع التعبئة" class="p-3 border rounded-xl outline-none focus:border-indigo-500">
+                <input type="text" id="itemPrice" placeholder="السعر" class="p-3 border rounded-xl outline-none focus:border-indigo-500 font-bold text-indigo-700">
+                <div class="flex items-center gap-2">
+                    <label class="text-xs text-gray-500 whitespace-nowrap">صورة المنتج:</label>
+                    <input type="file" id="itemFile" accept="image/*" class="w-full p-2 border rounded-xl bg-gray-50 text-xs">
                 </div>
             </div>
-            <button onclick="uploadData()" id="saveBtn" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-200 transition-all transform active:scale-95">نشر المنتج الآن</button>
+            <button onclick="uploadData()" id="saveBtn" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition shadow-lg shadow-indigo-200">نشر الصنف الآن</button>
         </div>
 
-        <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div id="grid" class="flex flex-col gap-3">
             </div>
     </div>
 
     <div id="modal" class="modal-overlay" onclick="this.style.display='none'">
-        <img id="zoomImg" src="" class="max-w-[95%] max-h-[95%] rounded-2xl shadow-2xl border-4 border-white/20">
+        <img id="zoomImg" src="" class="max-w-[95%] max-h-[95%] rounded-xl shadow-2xl border-4 border-white">
     </div>
 
     <script>
-        // --- إعدادات FIREBASE ---
-        // تنبيه: ضع بيانات مشروعك هنا لتعمل قاعدة البيانات
+        // --- إعدادات Firebase الخاصة بك ---
         const firebaseConfig = {
             apiKey: "AIzaSyA_g-FT6O8EeDTPUa5WL6dSnhpYXfJT-FU",
             databaseURL: "https://amer-25ec6-default-rtdb.firebaseio.com",
@@ -84,87 +71,84 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // جلب البيانات فورياً من السحابة
+        // استلام البيانات وتحديث القائمة فوراً
         db.ref('products').on('value', (snapshot) => {
             const data = snapshot.val();
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             
+            if (!data) {
+                grid.innerHTML = '<p class="text-center py-20 text-gray-400">لا يوجد أصناف في القائمة حالياً</p>';
+                return;
+            }
+
             for (let id in data) {
                 const item = data[id];
                 grid.innerHTML += `
-                    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-500 product-card group" data-name="${item.name}">
-                        <div class="relative overflow-hidden">
-                            <img src="${item.img}" onclick="zoom('${item.img}')" class="w-full h-64 object-cover cursor-zoom-in transition-transform duration-700 group-hover:scale-110">
-                            <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-4 py-1 rounded-full text-xs font-bold text-indigo-900 shadow-sm">${item.pack}</div>
+                    <div class="list-item bg-white p-3 rounded-2xl shadow-sm flex items-center gap-4 product-card border border-gray-100">
+                        <div class="flex-shrink-0">
+                            <img src="${item.img}" onclick="zoom('${item.img}')" class="w-20 h-20 md:w-24 md:h-24 object-cover rounded-xl cursor-zoom-in shadow-sm">
                         </div>
-                        <div class="p-6 text-center">
-                            <h3 class="text-xl font-bold text-gray-800 mb-3">${item.name}</h3>
-                            <div class="flex justify-between items-center px-2">
-                                <span class="text-2xl font-black text-indigo-600">${item.price}</span>
-                                <button onclick="deleteItem('${id}')" class="admin-only hidden bg-red-50 hover:bg-red-500 hover:text-white text-red-500 p-2 rounded-xl transition-all duration-300">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                </button>
-                            </div>
+                        <div class="flex-grow">
+                            <h3 class="text-lg font-bold text-gray-800 leading-tight">${item.name}</h3>
+                            <p class="text-gray-400 text-xs mt-1">${item.pack || ''}</p>
                         </div>
-                    </div>
-                `;
+                        <div class="text-left flex flex-col items-end gap-2">
+                            <span class="text-xl font-extrabold text-indigo-700">${item.price}</span>
+                            <button onclick="deleteItem('${id}')" class="admin-only hidden text-red-400 hover:text-red-600 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
+                    </div>`;
             }
             checkAdmin();
         });
 
+        // وظيفة الرفع
         function uploadData() {
             const file = document.getElementById('itemFile').files[0];
             const name = document.getElementById('itemName').value;
             const pack = document.getElementById('itemPack').value;
             const price = document.getElementById('itemPrice').value;
 
-            if (!file || !name || !price) return alert("يرجى إكمال البيانات واختيار الصورة");
+            if (!file || !name || !price) return alert("الرجاء إدخال الاسم، السعر، والصورة");
 
             const btn = document.getElementById('saveBtn');
-            btn.innerText = "جاري النشر...";
-            btn.disabled = true;
+            btn.innerText = "جاري النشر..."; btn.disabled = true;
 
             const reader = new FileReader();
             reader.onload = function() {
-                db.ref('products').push({
-                    name: name, pack: pack, price: price, img: reader.result
-                }).then(() => {
-                    btn.innerText = "نشر المنتج الآن";
-                    btn.disabled = false;
+                db.ref('products').push({ name, pack, price, img: reader.result }).then(() => {
+                    btn.innerText = "نشر الصنف الآن"; btn.disabled = false;
                     document.getElementById('itemName').value = '';
+                    document.getElementById('itemPack').value = '';
                     document.getElementById('itemPrice').value = '';
                     document.getElementById('itemFile').value = '';
-                    alert("تمت الإضافة بنجاح!");
+                }).catch(err => {
+                    alert("خطأ في الاتصال: تأكد من تفعيل Rules في Firebase");
+                    btn.innerText = "نشر الصنف الآن"; btn.disabled = false;
                 });
             };
             reader.readAsDataURL(file);
         }
 
-        function zoom(src) {
-            document.getElementById('zoomImg').src = src;
-            document.getElementById('modal').style.display = 'flex';
-        }
-
+        function zoom(src) { document.getElementById('zoomImg').src = src; document.getElementById('modal').style.display = 'flex'; }
+        
         function search() {
             let q = document.getElementById('searchInput').value.toLowerCase();
             document.querySelectorAll('.product-card').forEach(c => {
-                c.style.display = c.getAttribute('data-name').toLowerCase().includes(q) ? 'block' : 'none';
+                c.style.display = c.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
             });
         }
 
         function loginAdmin() {
-            let p = prompt("كلمة مرور الإدارة:");
-            if(p === "admin123") {
+            if(prompt("كلمة مرور الإدارة لشركة عامر دهيمش:") === "admin123") {
                 localStorage.setItem('isAdmin_Amer', 'true');
                 checkAdmin();
             } else { alert("كلمة المرور خاطئة"); }
         }
 
-        function logoutAdmin() {
-            localStorage.removeItem('isAdmin_Amer');
-            location.reload();
-        }
+        function logoutAdmin() { localStorage.removeItem('isAdmin_Amer'); location.reload(); }
 
         function checkAdmin() {
             if(localStorage.getItem('isAdmin_Amer') === 'true') {
@@ -173,10 +157,7 @@
             }
         }
 
-        function deleteItem(id) {
-            if(confirm('هل أنت متأكد من حذف هذا المنتج؟')) db.ref('products/' + id).remove();
-        }
+        function deleteItem(id) { if(confirm('هل تريد حذف هذا الصنف نهائياً؟')) db.ref('products/' + id).remove(); }
     </script>
 </body>
-
 </html>
