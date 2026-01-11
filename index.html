@@ -6,137 +6,137 @@
     <title>شركة عامر دهيمش</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
         
-        body { 
-            font-family: 'Cairo', sans-serif; 
-            background-color: #fcfdfe; 
-            color: #1a202c;
-            letter-spacing: -0.01em;
+        :root {
+            --primary: #0f172a;
+            --accent: #2563eb;
         }
 
-        .premium-header {
-            background: linear-gradient(135deg, #102a63 0%, #1e3a8a 100%);
-            box-shadow: 0 10px 30px -10px rgba(30, 58, 138, 0.3);
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: var(--primary);
+        }
+
+        .main-header {
+            background: var(--primary);
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+            padding-bottom: 4rem;
         }
 
         .product-card {
-            background: #ffffff;
-            border: 1px solid #f0f2f5;
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 24px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
-            border-color: #e2e8f0;
-        }
-
-        .image-container {
-            position: relative;
-            overflow: hidden;
-            border-radius: 1.25rem;
-        }
-
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            z-index: 2000;
-            justify-content: center; align-items: center;
-        }
-
-        /* تخصيص محرك البحث */
-        .search-input {
-            transition: all 0.3s ease;
-            border: 1px solid #edf2f7;
-        }
-        .search-input:focus {
+            transform: translateY(-8px) scale(1.02);
             background: #ffffff;
-            border-color: #1e3a8a;
-            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
         }
 
-        /* انيميشن لوحة التحكم */
-        #adminPanel {
-            animation: slideDown 0.5s ease-out;
+        .pack-badge {
+            font-size: 14px; /* تكبير الخط */
+            font-weight: 800; /* تغميق الخط */
+            color: #0f172a; /* لون داكن جداً */
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
         }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-20px); }
+
+        .price-tag {
+            background: linear-gradient(45deg, #1e3a8a, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+        }
+
+        .admin-section {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-blur {
+            backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.9);
         }
     </style>
 </head>
 <body>
 
-    <header class="premium-header text-white py-16 mb-12 text-center relative cursor-pointer" onclick="loginAdmin()">
+    <header class="main-header text-white pt-16 pb-20 text-center shadow-2xl relative cursor-pointer" onclick="loginAdmin()">
         <div class="container mx-auto px-4">
-            <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">شركة عامر دهيمش</h1>
-            <div class="h-1 w-20 bg-white/20 mx-auto mt-4 rounded-full"></div>
+            <h1 class="text-4xl md:text-5xl font-black tracking-tight mb-2 uppercase">شركة عامر دهيمش</h1>
+            <div class="w-16 h-1 bg-blue-500 mx-auto rounded-full"></div>
         </div>
     </header>
 
-    <div class="container mx-auto px-4 max-w-4xl">
+    <div class="container mx-auto px-4 max-w-3xl -mt-12">
         
-        <div id="adminPanel" class="hidden bg-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] border border-gray-100 p-8 mb-16">
-            <div class="flex items-center justify-between mb-10">
-                <h2 class="text-xl font-bold text-gray-800">إدارة القائمة المتقدمة</h2>
-                <button onclick="toggleAdmin()" class="text-gray-400 hover:text-red-500 transition-colors text-2xl">&times;</button>
+        <div id="adminPanel" class="hidden admin-section bg-white rounded-[32px] shadow-2xl p-8 mb-12 border border-blue-100">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-2xl font-black text-slate-800">وحدة التحكم الذكية</h2>
+                <button onclick="toggleAdmin()" class="text-slate-400 hover:text-red-500 text-3xl transition">&times;</button>
             </div>
 
-            <div class="space-y-8">
-                <div class="bg-gray-50/50 p-6 rounded-3xl border border-gray-100">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <input type="text" id="itemName" placeholder="اسم الصنف" class="p-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-blue-900 outline-none">
-                        <input type="text" id="itemPack" placeholder="التعبئة (كرتون/علبة)" class="p-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-blue-900 outline-none">
-                        <input type="text" id="itemPrice" placeholder="السعر" class="p-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-blue-900 outline-none font-bold text-blue-900">
-                    </div>
-                    <div class="flex flex-col md:flex-row gap-4 items-center">
-                        <input type="file" id="itemFile" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-2xl file:border-0 file:text-sm file:font-bold file:bg-blue-900 file:text-white hover:file:bg-blue-800 cursor-pointer">
-                        <button onclick="addItem()" class="w-full md:w-48 bg-gray-800 text-white py-4 rounded-2xl font-bold hover:bg-black transition shadow-lg">إضافة منتج</button>
-                    </div>
+            <div class="grid grid-cols-1 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="itemName" placeholder="اسم الصنف" class="p-4 rounded-2xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-600 outline-none">
+                    <input type="text" id="itemPack" placeholder="كمية التعبئة" class="p-4 rounded-2xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-600 outline-none">
+                    <input type="text" id="itemPrice" placeholder="السعر النهائي" class="p-4 rounded-2xl bg-slate-50 border-none ring-1 ring-slate-200 focus:ring-2 focus:ring-blue-600 outline-none font-bold">
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-4 items-center bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200">
+                    <input type="file" id="itemFile" accept="image/*" class="w-full text-sm text-slate-500 file:bg-slate-800 file:text-white file:rounded-xl file:px-6 file:py-2 file:border-none cursor-pointer">
+                    <button onclick="addItem()" class="w-full md:w-48 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold transition shadow-xl shadow-blue-200">إضافة الصنف</button>
                 </div>
 
-                <div class="overflow-hidden rounded-3xl border border-gray-100 shadow-sm">
+                <div class="overflow-x-auto rounded-2xl border border-slate-100 mt-6">
                     <table class="w-full text-right">
-                        <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-bold">
+                        <thead class="bg-slate-800 text-white text-xs">
                             <tr>
-                                <th class="p-5">الصنف</th>
-                                <th class="p-5">التعبئة</th>
-                                <th class="p-5">السعر</th>
-                                <th class="p-5">تحكم</th>
+                                <th class="p-4">الصنف</th>
+                                <th class="p-4">التعبئة</th>
+                                <th class="p-4">السعر</th>
+                                <th class="p-4">إجراء</th>
                             </tr>
                         </thead>
-                        <tbody id="adminTableBody" class="text-sm">
-                            </tbody>
+                        <tbody id="adminTableBody" class="text-sm"></tbody>
                     </table>
                 </div>
 
-                <div class="bg-gray-900 p-6 rounded-3xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs text-gray-400 font-bold uppercase tracking-widest">كود البيانات (GitHub Data)</span>
-                        <button onclick="copyJson()" class="text-xs bg-white text-black px-4 py-2 rounded-xl font-bold hover:bg-gray-200 transition">نسخ الكود 📋</button>
+                <div class="bg-slate-900 p-5 rounded-2xl">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">مخرجات بيانات سوريا</span>
+                        <button onclick="copyJson()" class="text-xs bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">نسخ الكود 📋</button>
                     </div>
-                    <textarea id="outputJson" class="w-full h-20 bg-transparent text-gray-500 font-mono text-[10px] border-none outline-none resize-none" readonly></textarea>
+                    <textarea id="outputJson" class="w-full h-20 bg-transparent text-blue-400 font-mono text-[10px] outline-none resize-none" readonly></textarea>
                 </div>
             </div>
         </div>
 
-        <div class="relative mb-12">
-            <input type="text" id="searchInput" onkeyup="search()" placeholder="ابحث عن منتج..." 
-                   class="search-input w-full p-6 pr-14 rounded-3xl shadow-sm text-lg outline-none bg-gray-50/30">
-            <span class="absolute right-6 top-6 opacity-30">🔍</span>
+        <div class="relative mb-10">
+            <input type="text" id="searchInput" onkeyup="search()" placeholder="بحث عن منتج..." 
+                   class="w-full p-6 pr-14 rounded-3xl shadow-xl border-none outline-none bg-white/90 focus:bg-white transition-all text-lg">
+            <span class="absolute right-6 top-6 opacity-20">🔍</span>
         </div>
 
-        <div id="grid" class="flex flex-col gap-4 pb-20">
+        <div id="grid" class="grid grid-cols-1 gap-4 pb-24">
             </div>
     </div>
 
-    <div id="modal" class="modal-overlay" onclick="this.style.display='none'">
-        <img id="zoomImg" src="" class="max-w-[90%] max-h-[80vh] rounded-[2rem] shadow-2xl">
+    <div id="modal" class="modal-overlay modal-blur fixed inset-0 z-[3000] hidden flex items-center justify-center p-4" onclick="this.style.display='none'">
+        <img id="zoomImg" src="" class="max-w-full max-h-[85vh] rounded-3xl shadow-2xl object-contain">
     </div>
 
     <script>
@@ -148,7 +148,7 @@
                 products = data;
                 renderUI();
             }).catch(() => {
-                document.getElementById('grid').innerHTML = '<div class="text-center py-20 opacity-20">بانتظار إضافة البيانات...</div>';
+                document.getElementById('grid').innerHTML = '<div class="text-center py-20 opacity-20 text-xl font-bold italic">شركة عامر دهيمش ترحب بكم</div>';
             });
 
         function renderUI() {
@@ -158,29 +158,30 @@
             table.innerHTML = '';
 
             products.forEach((item, index) => {
-                // شكل العرض للزبون
+                // عرض الزبون
                 grid.innerHTML += `
-                    <div class="product-card p-4 rounded-[2rem] flex items-center gap-6">
-                        <div class="w-24 h-24 flex-shrink-0">
-                            <img src="${item.img}" onclick="zoom('${item.img}')" class="w-full h-full object-cover rounded-2xl cursor-zoom-in">
+                    <div class="product-card p-4 flex items-center gap-5">
+                        <div class="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 relative">
+                            <img src="${item.img}" onclick="event.stopPropagation(); zoom('${item.img}')" 
+                                 class="w-full h-full object-cover rounded-[18px] cursor-zoom-in shadow-inner">
                         </div>
                         <div class="flex-grow">
-                            <h3 class="text-[14px] font-bold text-gray-800 mb-2 leading-tight">${item.name}</h3>
-                            <span class="text-[11px] font-medium text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full border border-gray-50 shadow-sm">${item.pack}</span>
+                            <h3 class="text-[14px] font-bold text-slate-700 mb-2 leading-tight">${item.name}</h3>
+                            <span class="pack-badge inline-block">${item.pack}</span>
                         </div>
                         <div class="text-left">
-                            <span class="text-xl font-extrabold text-blue-900 tracking-tight">${item.price}</span>
+                            <span class="text-2xl font-black price-tag">${item.price}</span>
                         </div>
                     </div>`;
 
-                // شكل العرض في لوحة التحكم
+                // عرض الإدارة
                 table.innerHTML += `
-                    <tr class="border-b border-gray-50">
-                        <td class="p-4"><input type="text" value="${item.name}" onchange="updateVal(${index}, 'name', this.value)" class="w-full bg-transparent outline-none focus:text-blue-600"></td>
-                        <td class="p-4"><input type="text" value="${item.pack}" onchange="updateVal(${index}, 'pack', this.value)" class="w-full bg-transparent outline-none"></td>
-                        <td class="p-4 font-bold text-blue-900"><input type="text" value="${item.price}" onchange="updateVal(${index}, 'price', this.value)" class="w-full bg-transparent outline-none"></td>
-                        <td class="p-4">
-                            <button onclick="deleteItem(${index})" class="text-red-300 hover:text-red-600 transition text-lg">×</button>
+                    <tr class="border-b border-slate-50">
+                        <td class="p-3"><input type="text" value="${item.name}" onchange="updateVal(${index}, 'name', this.value)" class="w-full bg-transparent outline-none"></td>
+                        <td class="p-3"><input type="text" value="${item.pack}" onchange="updateVal(${index}, 'pack', this.value)" class="w-full bg-transparent outline-none font-bold"></td>
+                        <td class="p-3 font-bold text-blue-600"><input type="text" value="${item.price}" onchange="updateVal(${index}, 'price', this.value)" class="w-full bg-transparent outline-none"></td>
+                        <td class="p-3">
+                            <button onclick="deleteItem(${index})" class="text-red-400 hover:text-red-600 text-xl">🗑</button>
                         </td>
                     </tr>`;
             });
@@ -193,7 +194,7 @@
             const pack = document.getElementById('itemPack').value;
             const price = document.getElementById('itemPrice').value;
 
-            if (!file || !name) return alert("يرجى إكمال بيانات المنتج");
+            if (!file || !name || !price) return alert("يرجى إكمال البيانات الأساسية");
 
             const reader = new FileReader();
             reader.onload = function() {
@@ -213,7 +214,7 @@
         }
 
         function deleteItem(index) {
-            if(confirm('هل تريد حذف هذا المنتج؟')) {
+            if(confirm('هل تريد حذف الصنف؟')) {
                 products.splice(index, 1);
                 renderUI();
             }
@@ -223,10 +224,14 @@
             const text = document.getElementById('outputJson');
             text.select();
             document.execCommand('copy');
-            alert("تم نسخ البيانات بنجاح! ✅");
+            alert("تم نسخ البيانات بنجاح! حدث ملف GitHub الآن.");
         }
 
-        function zoom(src) { document.getElementById('zoomImg').src = src; document.getElementById('modal').style.display = 'flex'; }
+        function zoom(src) { 
+            const m = document.getElementById('modal');
+            document.getElementById('zoomImg').src = src; 
+            m.style.display = 'flex'; 
+        }
         
         function search() {
             let q = document.getElementById('searchInput').value.toLowerCase();
@@ -236,7 +241,7 @@
         }
 
         function loginAdmin() {
-            if(prompt("رمز الإدارة الفخم:") === "admin123") {
+            if(prompt("رمز دخول الإدارة:") === "admin123") {
                 toggleAdmin();
             }
         }
