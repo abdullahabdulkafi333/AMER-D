@@ -64,6 +64,10 @@
             background-color: #f3f4f6;
             color: #9ca3af;
             font-size: 12px;
+            background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%, transparent 75%, #e5e7eb 75%, #e5e7eb),
+                              linear-gradient(45deg, #e5e7eb 25%, transparent 25%, transparent 75%, #e5e7eb 75%, #e5e7eb);
+            background-size: 16px 16px;
+            background-position: 0 0, 8px 8px;
         }
         
         .clickable-image {
@@ -73,7 +77,17 @@
         
         .clickable-image:hover {
             transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            opacity: 0.9;
+        }
+        
+        /* تحميل متأخر للصور */
+        .lazy-load {
+            opacity: 0;
+            transition: opacity 0.3s ease-in;
+        }
+        
+        .lazy-load.loaded {
+            opacity: 1;
         }
         
         /* نافذة تكبير الصورة */
@@ -137,13 +151,19 @@
         }
         
         /* تحسينات للأداء */
-        .lazy-load {
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e5e7eb;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
         
-        .lazy-load.loaded {
-            opacity: 1;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         /* معاينة الصور في الإدارة */
@@ -157,11 +177,36 @@
             display: block;
         }
         
-        .link-hint {
-            font-size: 11px;
-            color: #6b7280;
-            margin-top: 5px;
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .file-upload input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-label {
+            display: block;
+            padding: 8px 12px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
             text-align: center;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .file-label:hover {
+            background: #2563eb;
         }
     </style>
 </head>
@@ -194,39 +239,31 @@
                 <div class="mb-3">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <input type="text" id="itemImageUrl" placeholder="رابط ImgBB (اختياري)" class="p-2 rounded-lg border w-full">
-                            <p class="text-xs text-gray-500 mt-1">انسخ رابط الصورة من ImgBB</p>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">صورة المنتج (اختياري)</label>
+                            <div class="file-upload">
+                                <label class="file-label">
+                                    📁 اختر صورة من الجهاز
+                                    <input type="file" id="itemFile" accept="image/*" class="hidden" onchange="previewImage()">
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">الصيغ المدعومة: JPG, PNG, GIF, WebP</p>
                         </div>
                         <div class="text-center">
-                            <img id="imagePreview" src="" class="image-preview hidden" alt="معاينة الصورة" loading="lazy">
-                            <div id="imagePreviewPlaceholder" class="image-preview image-placeholder">معاينة الصورة</div>
+                            <img id="imagePreview" src="" class="image-preview hidden" alt="معاينة الصورة">
+                            <div id="imagePreviewPlaceholder" class="image-preview image-placeholder">
+                                ستظهر معاينة الصورة هنا
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-2 text-center">
-                        <button onclick="testImageUrl()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm">
-                            🔍 اختبار رابط الصورة
-                        </button>
-                        <p class="link-hint">مثال: https://i.ibb.co/xxxxxx/image.jpg</p>
-                    </div>
-                    <div class="mt-3 bg-yellow-50 p-3 rounded border border-yellow-200">
-                        <h4 class="font-bold text-yellow-800 text-sm mb-1">كيفية رفع الصور إلى ImgBB:</h4>
-                        <ol class="text-xs text-yellow-700 list-decimal pr-4 space-y-1">
-                            <li>اذهب إلى <a href="https://imgbb.com" target="_blank" class="text-blue-600 underline">imgbb.com</a></li>
-                            <li>انقر على "Start uploading"</li>
-                            <li>اختر صورة المنتج من جهازك</li>
-                            <li>انسخ الرابط الذي يظهر (يبدأ بـ https://i.ibb.co/)</li>
-                            <li>الصق الرابط في الحقل أعلاه</li>
-                        </ol>
-                    </div>
                 </div>
-                <button onclick="addItem()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition mt-3">
+                <button onclick="addItem()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition mt-2">
                     ➕ إضافة منتج جديد
                 </button>
             </div>
             
             <!-- قائمة المنتجات للإدارة -->
             <div class="mb-4">
-                <h3 class="font-bold text-gray-800 mb-2">المنتجات الحالية (${products.length})</h3>
+                <h3 class="font-bold text-gray-800 mb-2">المنتجات الحالية</h3>
                 <div class="overflow-x-auto rounded-lg border">
                     <table class="w-full text-sm">
                         <thead class="bg-gray-800 text-white">
@@ -236,7 +273,6 @@
                                 <th class="p-2">المنتج</th>
                                 <th class="p-2">التعبئة</th>
                                 <th class="p-2">السعر</th>
-                                <th class="p-2">رابط الصورة</th>
                                 <th class="p-2">الترتيب</th>
                                 <th class="p-2">الإجراءات</th>
                             </tr>
@@ -252,11 +288,11 @@
             <div class="bg-gray-900 p-4 rounded-lg">
                 <div class="flex justify-between items-center mb-2">
                     <h4 class="text-white font-bold">تصدير البيانات (JSON)</h4>
-                    <span class="text-gray-400 text-sm" id="productsCount">${products.length} منتج</span>
+                    <span class="text-gray-400 text-sm" id="productsCount">0 منتج</span>
                 </div>
                 <div class="mb-3">
                     <textarea id="outputJson" class="w-full h-40 bg-gray-800 text-green-400 text-xs p-3 rounded font-mono resize-none" 
-                              readonly placeholder="ستظهر بيانات JSON هنا..."></textarea>
+                              readonly placeholder="ستظهر بيانات JSON هنا عند إضافة أو تعديل المنتجات..."></textarea>
                 </div>
                 <div class="flex flex-col gap-2">
                     <button onclick="copyJson()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-bold transition flex items-center justify-center gap-2">
@@ -313,7 +349,7 @@
             
             <div class="mb-4 text-center">
                 <div class="relative inline-block">
-                    <img id="currentImage" src="" class="w-48 h-48 object-cover rounded-lg mx-auto mb-3 hidden" loading="lazy">
+                    <img id="currentImage" src="" class="w-48 h-48 object-cover rounded-lg mx-auto mb-3 hidden">
                     <div id="currentImagePlaceholder" class="w-48 h-48 rounded-lg mx-auto mb-3 bg-gray-100 flex items-center justify-center text-gray-400">
                         لا توجد صورة حالية
                     </div>
@@ -322,29 +358,22 @@
             </div>
             
             <div class="mb-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">رابط ImgBB الجديد</label>
-                        <input type="text" id="newImageUrl" placeholder="https://i.ibb.co/..." 
-                               class="w-full p-3 border rounded-lg" oninput="previewNewImage()">
-                    </div>
-                    <div class="text-center">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">معاينة الصورة</label>
-                        <img id="newImagePreview" src="" class="w-32 h-32 object-cover rounded-lg mx-auto border-2 border-dashed border-gray-300 hidden" loading="lazy">
-                        <div id="newImagePreviewPlaceholder" class="w-32 h-32 rounded-lg mx-auto bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
-                            ستظهر المعاينة هنا
-                        </div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">اختر صورة جديدة</label>
+                <div class="file-upload mb-3">
+                    <label class="file-label w-full">
+                        📁 اختر صورة جديدة من الجهاز
+                        <input type="file" id="newImageFile" accept="image/*" class="hidden" onchange="previewEditImage()">
+                    </label>
+                </div>
+                
+                <div class="text-center">
+                    <img id="newImagePreview" src="" class="w-32 h-32 object-cover rounded-lg mx-auto border-2 border-dashed border-gray-300 hidden">
+                    <div id="newImagePreviewPlaceholder" class="w-32 h-32 rounded-lg mx-auto bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+                        ستظهر معاينة الصورة هنا
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 mt-2">انسخ رابط الصورة من ImgBB مباشرة</p>
-                <div class="mt-3 flex gap-2">
-                    <button onclick="testNewImageUrl()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg text-sm">
-                        🔍 اختبار الرابط
-                    </button>
-                    <button onclick="clearNewImage()" class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-lg text-sm">
-                        🗑️ مسح الرابط
-                    </button>
-                </div>
+                
+                <p class="text-xs text-gray-500 mt-2">اختر صورة جديدة للمنتج أو اتركه فارغاً للحفاظ على الصورة الحالية</p>
             </div>
             
             <div class="flex gap-2 mt-6">
@@ -364,7 +393,7 @@
     <!-- نافذة تكبير الصورة للزبائن -->
     <div id="zoomModal" class="image-modal">
         <div class="close-modal" onclick="closeZoomModal()">×</div>
-        <img id="zoomedImage" class="modal-image" src="" alt="" loading="lazy">
+        <img id="zoomedImage" class="modal-image" src="" alt="">
         <div id="zoomCaption" class="modal-caption"></div>
     </div>
 
@@ -372,6 +401,120 @@
         // ============= المتغيرات الرئيسية =============
         let products = [];
         let currentEditIndex = -1;
+        let imageCache = new Map(); // ذاكرة تخزين مؤقت للصور
+        let selectedFile = null;
+        let newSelectedFile = null;
+        
+        // ============= نظام التحميل المتأخر الذكي =============
+        class LazyImageLoader {
+            constructor() {
+                this.observer = null;
+                this.initObserver();
+            }
+            
+            initObserver() {
+                this.observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            this.loadImage(img);
+                            this.observer.unobserve(img);
+                        }
+                    });
+                }, {
+                    rootMargin: '100px', // بدء التحميل قبل 100px من ظهور الصورة
+                    threshold: 0.01
+                });
+            }
+            
+            loadImage(img) {
+                const src = img.dataset.src;
+                if (!src) return;
+                
+                // التحقق من الذاكرة المؤقتة
+                if (imageCache.has(src)) {
+                    this.setImageSource(img, imageCache.get(src));
+                    return;
+                }
+                
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    imageCache.set(src, src);
+                    this.setImageSource(img, src);
+                };
+                
+                tempImg.onerror = () => {
+                    console.warn('فشل تحميل الصورة:', src);
+                    img.classList.remove('lazy-load');
+                    img.classList.add('image-placeholder');
+                    img.style.display = 'none';
+                    img.parentElement.innerHTML = '<div class="product-image image-placeholder">❌ خطأ</div>';
+                };
+                
+                tempImg.src = src;
+            }
+            
+            setImageSource(img, src) {
+                img.src = src;
+                img.classList.remove('lazy-load');
+                img.classList.add('loaded');
+                img.onload = null;
+                img.onerror = null;
+            }
+            
+            observe(image) {
+                if (this.observer) {
+                    this.observer.observe(image);
+                }
+            }
+            
+            disconnect() {
+                if (this.observer) {
+                    this.observer.disconnect();
+                }
+            }
+        }
+        
+        const lazyLoader = new LazyImageLoader();
+        
+        // ============= معاينة الصور =============
+        function previewImage() {
+            const fileInput = document.getElementById('itemFile');
+            const preview = document.getElementById('imagePreview');
+            const placeholder = document.getElementById('imagePreviewPlaceholder');
+            
+            if (fileInput.files && fileInput.files[0]) {
+                selectedFile = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                };
+                
+                reader.readAsDataURL(selectedFile);
+            }
+        }
+        
+        function previewEditImage() {
+            const fileInput = document.getElementById('newImageFile');
+            const preview = document.getElementById('newImagePreview');
+            const placeholder = document.getElementById('newImagePreviewPlaceholder');
+            
+            if (fileInput.files && fileInput.files[0]) {
+                newSelectedFile = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                };
+                
+                reader.readAsDataURL(newSelectedFile);
+            }
+        }
         
         // ============= تحميل البيانات =============
         async function loadData() {
@@ -379,10 +522,36 @@
                 const response = await fetch('data.json');
                 products = await response.json();
                 renderAll();
+                
+                // تحميل أول 3 صور فوراً لتحسين تجربة المستخدم
+                setTimeout(() => {
+                    loadFirstImages();
+                }, 300);
+                
             } catch (error) {
                 console.error('خطأ في تحميل البيانات:', error);
                 products = [];
                 renderAll();
+            }
+        }
+        
+        // ============= تحميل أول 3 صور فوراً =============
+        function loadFirstImages() {
+            const firstImages = document.querySelectorAll('.product-image[data-src]');
+            const imagesToLoad = Math.min(3, firstImages.length);
+            
+            for (let i = 0; i < imagesToLoad; i++) {
+                const img = firstImages[i];
+                const src = img.dataset.src;
+                if (src) {
+                    const tempImg = new Image();
+                    tempImg.onload = () => {
+                        img.src = src;
+                        img.classList.remove('lazy-load');
+                        img.classList.add('loaded');
+                    };
+                    tempImg.src = src;
+                }
             }
         }
         
@@ -417,13 +586,10 @@
                         <td class="p-3">
                             <div class="flex items-center justify-center">
                                 ${hasImage ? 
-                                    `<img src="${product.img}" 
+                                    `<img data-src="${product.img}" 
                                          alt="${product.name}"
-                                         class="product-image clickable-image lazy-load"
-                                         onclick="zoomProductImage('${product.img.replace(/'/g, "\\'")}', '${product.name.replace(/'/g, "\\'")}')"
-                                         loading="lazy"
-                                         onload="this.classList.add('loaded')"
-                                         onerror="this.onerror=null; this.src=''; this.parentElement.innerHTML='<div class=\"product-image image-placeholder\">❌ خطأ</div>';">` :
+                                         class="product-image lazy-load clickable-image"
+                                         onclick="zoomProductImage('${escapeString(product.img)}', '${escapeString(product.name)}')">` :
                                     `<div class="product-image image-placeholder">بدون صورة</div>`
                                 }
                             </div>
@@ -445,15 +611,18 @@
             
             table.innerHTML = html;
             
-            // تحميل الصور بشكل متأخر
+            // بدء مراقبة الصور للتحميل المتأخر
             setTimeout(() => {
                 const lazyImages = document.querySelectorAll('.lazy-load');
                 lazyImages.forEach(img => {
-                    if (img.src) {
-                        img.classList.add('loaded');
-                    }
+                    lazyLoader.observe(img);
                 });
             }, 100);
+        }
+        
+        // ============= دالة مساعدة للتهريب =============
+        function escapeString(str) {
+            return str ? str.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
         }
         
         // ============= عرض جدول الإدارة =============
@@ -463,7 +632,7 @@
             if (products.length === 0) {
                 table.innerHTML = `
                     <tr>
-                        <td colspan="8" class="p-4 text-center text-gray-400">
+                        <td colspan="7" class="p-4 text-center text-gray-400">
                             لا توجد منتجات للإدارة
                         </td>
                     </tr>
@@ -474,9 +643,6 @@
             let html = '';
             products.forEach((product, index) => {
                 const hasImage = product.img && product.img.trim() !== '';
-                const shortUrl = hasImage ? 
-                    (product.img.length > 30 ? product.img.substring(0, 30) + '...' : product.img) : 
-                    'لا يوجد';
                 
                 html += `
                     <tr class="border-b hover:bg-gray-50">
@@ -485,9 +651,8 @@
                             ${hasImage ? 
                                 `<img src="${product.img}" 
                                      class="admin-image clickable-image"
-                                     onclick="zoomProductImage('${product.img.replace(/'/g, "\\'")}', '${product.name.replace(/'/g, "\\'")}')"
+                                     onclick="zoomProductImage('${escapeString(product.img)}', '${escapeString(product.name)}')"
                                      title="انقر لتكبير الصورة"
-                                     loading="lazy"
                                      onerror="this.onerror=null; this.src=''; this.outerHTML='<div class=\"admin-image image-placeholder text-xs flex items-center justify-center\">❌</div>';">` :
                                 `<div class="admin-image image-placeholder text-xs flex items-center justify-center">لا توجد</div>`
                             }
@@ -511,17 +676,6 @@
                                    class="w-full p-2 border rounded text-sm font-bold">
                         </td>
                         <td class="p-2">
-                            <input type="text" 
-                                   value="${product.img || ''}" 
-                                   oninput="updateProduct(${index}, 'img', this.value)"
-                                   placeholder="https://i.ibb.co/..."
-                                   class="w-full p-2 border rounded text-sm text-blue-600" 
-                                   style="font-family: monospace; font-size: 11px;">
-                            <div class="text-xs text-gray-500 mt-1 truncate" title="${product.img || ''}">
-                                ${shortUrl}
-                            </div>
-                        </td>
-                        <td class="p-2">
                             <div class="flex gap-1">
                                 <button onclick="moveProduct(${index}, -1)" class="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200" title="تحريك لأعلى">
                                     ⬆️
@@ -534,10 +688,10 @@
                         <td class="p-2">
                             <div class="flex flex-col gap-1">
                                 <button onclick="editImage(${index})" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
-                                    ✏️ تعديل
+                                    ✏️ تعديل الصورة
                                 </button>
                                 <button onclick="deleteProduct(${index})" class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm">
-                                    🗑️ حذف
+                                    🗑️ حذف المنتج
                                 </button>
                             </div>
                         </td>
@@ -578,7 +732,6 @@
             const name = document.getElementById('itemName').value.trim();
             const pack = document.getElementById('itemPack').value.trim();
             const price = document.getElementById('itemPrice').value.trim();
-            const imageUrl = document.getElementById('itemImageUrl').value.trim();
             
             if (!name || !price) {
                 alert('⚠️ يرجى إدخال اسم المنتج والسعر');
@@ -589,64 +742,37 @@
                 name: name,
                 pack: pack || '',
                 price: price,
-                img: imageUrl || ''
+                img: ''
             };
             
-            products.push(newProduct);
-            renderAll();
-            clearForm();
-            alert('✅ تم إضافة المنتج بنجاح!');
+            // معالجة الصورة إذا وجدت
+            if (selectedFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    newProduct.img = e.target.result;
+                    products.push(newProduct);
+                    selectedFile = null;
+                    renderAll();
+                    clearForm();
+                    alert('✅ تم إضافة المنتج مع الصورة بنجاح!');
+                };
+                reader.readAsDataURL(selectedFile);
+            } else {
+                products.push(newProduct);
+                renderAll();
+                clearForm();
+                alert('✅ تم إضافة المنتج بنجاح!');
+            }
         }
         
         function clearForm() {
             document.getElementById('itemName').value = '';
             document.getElementById('itemPack').value = '';
             document.getElementById('itemPrice').value = '';
-            document.getElementById('itemImageUrl').value = '';
+            document.getElementById('itemFile').value = '';
             document.getElementById('imagePreview').classList.add('hidden');
             document.getElementById('imagePreviewPlaceholder').classList.remove('hidden');
-        }
-        
-        // ============= اختبار رابط الصورة =============
-        function testImageUrl() {
-            const urlInput = document.getElementById('itemImageUrl');
-            const url = urlInput.value.trim();
-            
-            if (!url) {
-                alert('⚠️ الرابط فارغ');
-                return;
-            }
-            
-            // التحقق من أن الرابط من ImgBB
-            if (!url.includes('i.ibb.co') && !url.includes('i.ibb.co')) {
-                if (!confirm('الرابط ليس من ImgBB. هل تريد المتابعة؟')) {
-                    return;
-                }
-            }
-            
-            const previewImg = document.getElementById('imagePreview');
-            const placeholder = document.getElementById('imagePreviewPlaceholder');
-            
-            previewImg.classList.add('hidden');
-            placeholder.classList.remove('hidden');
-            placeholder.textContent = 'جاري التحقق...';
-            placeholder.style.color = '#f59e0b';
-            
-            const testImg = new Image();
-            testImg.onload = function() {
-                previewImg.src = url;
-                previewImg.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-                alert('✅ الرابط صحيح! الصورة جاهزة');
-            };
-            
-            testImg.onerror = function() {
-                placeholder.textContent = 'الرابط غير صحيح';
-                placeholder.style.color = '#ef4444';
-                alert('❌ تعذر تحميل الصورة. تأكد من:\n1. الرابط المباشر للصورة\n2. الصورة موجودة فعلاً');
-            };
-            
-            testImg.src = url;
+            selectedFile = null;
         }
         
         // ============= تحديث JSON في لوحة التحكم =============
@@ -729,7 +855,6 @@
             const currentImage = document.getElementById('currentImage');
             const currentImagePlaceholder = document.getElementById('currentImagePlaceholder');
             const productName = document.getElementById('productName');
-            const newImageUrl = document.getElementById('newImageUrl');
             
             if (product.img && product.img.trim() !== '') {
                 currentImage.src = product.img;
@@ -741,80 +866,30 @@
             }
             
             productName.textContent = product.name;
-            newImageUrl.value = product.img || '';
-            previewNewImage();
+            newSelectedFile = null;
+            document.getElementById('newImageFile').value = '';
+            document.getElementById('newImagePreview').classList.add('hidden');
+            document.getElementById('newImagePreviewPlaceholder').classList.remove('hidden');
             
             document.getElementById('imageEditModal').classList.remove('hidden');
         }
         
-        function previewNewImage() {
-            const url = document.getElementById('newImageUrl').value.trim();
-            const preview = document.getElementById('newImagePreview');
-            const placeholder = document.getElementById('newImagePreviewPlaceholder');
-            
-            if (url) {
-                preview.src = url;
-                preview.style.display = 'block';
-                placeholder.style.display = 'none';
-            } else {
-                preview.style.display = 'none';
-                placeholder.style.display = 'flex';
-            }
-        }
-        
-        function testNewImageUrl() {
-            const urlInput = document.getElementById('newImageUrl');
-            const url = urlInput.value.trim();
-            
-            if (!url) {
-                alert('⚠️ الرابط فارغ');
-                return;
-            }
-            
-            const preview = document.getElementById('newImagePreview');
-            const placeholder = document.getElementById('newImagePreviewPlaceholder');
-            
-            preview.style.display = 'block';
-            placeholder.style.display = 'none';
-            preview.src = '';
-            preview.style.filter = 'blur(2px)';
-            preview.style.opacity = '0.5';
-            
-            const testImg = new Image();
-            testImg.onload = function() {
-                preview.src = url;
-                preview.style.filter = 'none';
-                preview.style.opacity = '1';
-                alert('✅ الرابط صحيح! الصورة جاهزة');
-            };
-            
-            testImg.onerror = function() {
-                preview.style.display = 'none';
-                placeholder.style.display = 'flex';
-                placeholder.textContent = 'الرابط غير صحيح';
-                placeholder.style.color = '#ef4444';
-                alert('❌ تعذر تحميل الصورة. تأكد من الرابط');
-            };
-            
-            testImg.src = url;
-        }
-        
-        function clearNewImage() {
-            document.getElementById('newImageUrl').value = '';
-            document.getElementById('newImagePreview').style.display = 'none';
-            document.getElementById('newImagePreviewPlaceholder').style.display = 'flex';
-            document.getElementById('newImagePreviewPlaceholder').textContent = 'ستظهر المعاينة هنا';
-            document.getElementById('newImagePreviewPlaceholder').style.color = '#9ca3af';
-        }
-        
         function updateProductImage() {
-            const newImageUrl = document.getElementById('newImageUrl').value.trim();
-            
             if (currentEditIndex >= 0 && currentEditIndex < products.length) {
-                products[currentEditIndex].img = newImageUrl;
-                renderAll();
-                closeImageModal();
-                alert('✅ تم تحديث صورة المنتج بنجاح');
+                if (newSelectedFile) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        products[currentEditIndex].img = e.target.result;
+                        renderAll();
+                        closeImageModal();
+                        alert('✅ تم تحديث صورة المنتج بنجاح');
+                    };
+                    reader.readAsDataURL(newSelectedFile);
+                } else {
+                    // لم يتم اختيار صورة جديدة، نبقي الصورة الحالية
+                    closeImageModal();
+                    alert('ℹ️ لم يتم تغيير الصورة');
+                }
             }
         }
         
@@ -831,7 +906,10 @@
         
         function closeImageModal() {
             document.getElementById('imageEditModal').classList.add('hidden');
-            clearNewImage();
+            newSelectedFile = null;
+            document.getElementById('newImageFile').value = '';
+            document.getElementById('newImagePreview').classList.add('hidden');
+            document.getElementById('newImagePreviewPlaceholder').classList.remove('hidden');
             currentEditIndex = -1;
         }
         
@@ -851,7 +929,7 @@
             modal.style.display = 'flex';
             
             modalImg.onerror = function() {
-                alert('تعذر تحميل الصورة. قد يكون الرابط غير صحيح.');
+                alert('تعذر تحميل الصورة');
                 closeZoomModal();
             };
             
@@ -903,29 +981,27 @@
         // ============= إضافة أحداث =============
         document.getElementById('searchInput').addEventListener('input', searchProducts);
         
-        // تحديث معاينة الصورة عند الكتابة
-        document.getElementById('itemImageUrl').addEventListener('input', function() {
-            const url = this.value.trim();
-            const previewImg = document.getElementById('imagePreview');
-            const placeholder = document.getElementById('imagePreviewPlaceholder');
-            
-            if (url) {
-                previewImg.src = url;
-                previewImg.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-            } else {
-                previewImg.classList.add('hidden');
-                placeholder.classList.remove('hidden');
-            }
+        // إضافة زر لتحديث جميع الصور
+        document.addEventListener('DOMContentLoaded', function() {
+            const header = document.querySelector('.premium-header');
+            const refreshBtn = document.createElement('button');
+            refreshBtn.innerHTML = '🔄 تحديث الصور';
+            refreshBtn.className = 'absolute left-4 top-4 bg-blue-600 text-white px-3 py-1 rounded text-sm opacity-0 hover:opacity-100 transition-opacity';
+            refreshBtn.onclick = function() {
+                imageCache.clear();
+                const images = document.querySelectorAll('.product-image[data-src]');
+                images.forEach(img => {
+                    img.src = '';
+                    img.classList.add('lazy-load');
+                    img.classList.remove('loaded');
+                    lazyLoader.observe(img);
+                });
+                loadFirstImages();
+                alert('✅ تم تحديث الصور');
+            };
+            header.style.position = 'relative';
+            header.appendChild(refreshBtn);
         });
-        
-        // نصائح للمستخدم
-        console.log('💡 نصائح لاستخدام ImgBB:');
-        console.log('1. اذهب إلى https://imgbb.com');
-        console.log('2. انقر على "Start uploading"');
-        console.log('3. اختر صورة من جهازك');
-        console.log('4. انسخ الرابط الذي يبدأ بـ https://i.ibb.co/');
-        console.log('5. الصق الرابط في لوحة التحكم');
         
     </script>
 </body>
