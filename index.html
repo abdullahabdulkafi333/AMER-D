@@ -375,7 +375,8 @@
                 return;
             }
             
-            const fragment = document.createDocumentFragment();
+            // مسح الجدول أولاً
+            table.innerHTML = '';
             
             products.forEach((product, index) => {
                 const row = document.createElement('tr');
@@ -414,11 +415,8 @@
                     </td>
                 `;
                 
-                fragment.appendChild(row);
+                table.appendChild(row);
             });
-            
-            table.innerHTML = '';
-            table.appendChild(fragment);
             
             renderAdminTable();
         }
@@ -471,26 +469,24 @@
             table.appendChild(fragment);
         }
         
-        // دالة البحث في الصنف فقط
+        // دالة البحث في الصنف فقط - محسنة
         function searchProducts() {
             const query = document.getElementById('searchInput').value.trim().toLowerCase();
-            const rows = document.querySelectorAll('#productsTable tr');
+            const rows = document.querySelectorAll('#productsTable tr[data-product-name]');
             
             // إذا كان البحث فارغاً، عرض جميع المنتجات
             if (!query) {
-                rows.forEach((row, index) => {
-                    if (index > 0) { // تخطي أول صف (إن وجد)
-                        row.style.display = '';
-                    }
+                rows.forEach((row) => {
+                    row.style.display = '';
                 });
                 return;
             }
             
             // البحث في اسم الصنف فقط
-            rows.forEach((row, index) => {
-                if (index === 0) return; // تخطي الصف الأول (الرأس)
-                
+            rows.forEach((row) => {
                 const productName = row.dataset.productName;
+                
+                // البحث في اسم المنتج
                 if (productName && productName.includes(query)) {
                     row.style.display = '';
                 } else {
