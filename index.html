@@ -11,10 +11,12 @@
             font-family: 'Cairo', sans-serif; 
             background: #f8fafc; 
             color: #0f172a; 
+            overflow-x: hidden;
         }
         .premium-header { 
             background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); 
             padding: 3rem 0 5rem; 
+            position: relative;
         }
         .header-line { 
             height: 4px; 
@@ -26,13 +28,15 @@
             position: sticky; 
             top: 0; 
             z-index: 40; 
-            background: rgba(255, 255, 255, 0.95); 
-            backdrop-filter: blur(10px); 
+            background: rgba(255, 255, 255, 0.98); 
+            backdrop-filter: blur(12px); 
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
         }
         .table-container { 
             border-radius: 16px; 
             overflow: hidden; 
             background: white; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
         }
         .price-text { 
             color: #1e40af; 
@@ -46,7 +50,8 @@
             object-fit: cover;
             border-radius: 8px;
             border: 1px solid #e5e7eb;
-            background-color: #f9fafb;
+            background: linear-gradient(45deg, #f3f4f6 25%, #e5e7eb 25%, #e5e7eb 75%, #f3f4f6 75%, #f3f4f6);
+            background-size: 16px 16px;
         }
         
         .admin-image {
@@ -61,13 +66,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #f3f4f6;
+            background: #f3f4f6;
             color: #9ca3af;
-            font-size: 12px;
-            background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%, transparent 75%, #e5e7eb 75%, #e5e7eb),
-                              linear-gradient(45deg, #e5e7eb 25%, transparent 25%, transparent 75%, #e5e7eb 75%, #e5e7eb);
-            background-size: 16px 16px;
-            background-position: 0 0, 8px 8px;
+            font-size: 11px;
+            font-weight: 500;
         }
         
         .clickable-image {
@@ -76,89 +78,52 @@
         }
         
         .clickable-image:hover {
-            transform: scale(1.05);
-            opacity: 0.9;
+            transform: scale(1.08);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         
         /* تحميل متأخر للصور */
         .lazy-load {
             opacity: 0;
-            transition: opacity 0.3s ease-in;
+            transform: scale(0.95);
+            transition: all 0.3s ease-out;
         }
         
         .lazy-load.loaded {
             opacity: 1;
+            transform: scale(1);
         }
         
-        /* نافذة تكبير الصورة */
-        .image-modal {
-            display: none;
+        /* شاشة التحميل */
+        .loading-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .modal-image {
-            max-width: 90%;
-            max-height: 85vh;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            object-fit: contain;
-        }
-        
-        .close-modal {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            color: white;
-            font-size: 35px;
-            cursor: pointer;
-            background: rgba(0,0,0,0.6);
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
+            background: #f8fafc;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
-            transition: all 0.3s;
-            z-index: 1001;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
         }
         
-        .close-modal:hover {
-            background: rgba(255,255,255,0.2);
-            transform: scale(1.1);
-        }
-        
-        .modal-caption {
-            position: absolute;
-            bottom: 25px;
-            color: white;
-            text-align: center;
-            width: 100%;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 10px 20px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 8px;
-            margin: 0 20px;
-        }
-        
-        /* تحسينات للأداء */
         .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #e5e7eb;
-            border-top: 2px solid #3b82f6;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #3b82f6;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        .loading-text {
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 600;
         }
         
         @keyframes spin {
@@ -166,7 +131,13 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* معاينة الصور في الإدارة */
+        /* تحسينات الأداء */
+        .product-row {
+            transform: translateZ(0);
+            will-change: transform;
+        }
+        
+        /* معاينة الصور */
         .image-preview {
             width: 80px;
             height: 80px;
@@ -195,25 +166,132 @@
         
         .file-label {
             display: block;
-            padding: 8px 12px;
-            background: #3b82f6;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             text-align: center;
             font-size: 14px;
-            transition: background 0.3s;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
         }
         
         .file-label:hover {
-            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        /* نافذة تكبير الصورة */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.97);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-image {
+            max-width: 90%;
+            max-height: 85vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: zoomIn 0.4s ease;
+        }
+        
+        @keyframes zoomIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            background: rgba(0,0,0,0.6);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 10001;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .close-modal:hover {
+            background: rgba(255,255,255,0.2);
+            transform: rotate(90deg);
+        }
+        
+        .modal-caption {
+            position: absolute;
+            bottom: 30px;
+            color: white;
+            text-align: center;
+            width: 100%;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 10px;
+            margin: 0 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* زر تحديث الصور */
+        .refresh-btn {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
         }
     </style>
 </head>
 <body>
 
+    <!-- شاشة التحميل -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">جاري تحميل قائمة المنتجات...</div>
+    </div>
+
     <header class="premium-header text-white pt-12 pb-16 text-center" onclick="loginAdmin()">
         <div class="container mx-auto px-4">
+            <button class="refresh-btn" onclick="refreshImages()" title="تحديث جميع الصور">
+                🔄 تحديث الصور
+            </button>
             <h1 class="text-3xl md:text-4xl font-black mb-2">شركة عامر دهيمش</h1>
             <div class="header-line"></div>
         </div>
@@ -232,12 +310,12 @@
             <div class="bg-blue-50 p-4 rounded-lg mb-4">
                 <h3 class="font-bold text-blue-800 mb-2">إضافة منتج جديد</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                    <input type="text" id="itemName" placeholder="اسم المنتج" class="p-2 rounded-lg border">
-                    <input type="text" id="itemPack" placeholder="التعبئة" class="p-2 rounded-lg border">
-                    <input type="text" id="itemPrice" placeholder="السعر" class="p-2 rounded-lg border font-bold">
+                    <input type="text" id="itemName" placeholder="اسم المنتج" class="p-3 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <input type="text" id="itemPack" placeholder="التعبئة" class="p-3 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <input type="text" id="itemPrice" placeholder="السعر" class="p-3 rounded-lg border font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div class="mb-3">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">صورة المنتج (اختياري)</label>
                             <div class="file-upload">
@@ -246,17 +324,17 @@
                                     <input type="file" id="itemFile" accept="image/*" class="hidden" onchange="previewImage()">
                                 </label>
                             </div>
-                            <p class="text-xs text-gray-500 mt-2">الصيغ المدعومة: JPG, PNG, GIF, WebP</p>
+                            <p class="text-xs text-gray-500 mt-2">الحجم الأمثل: 200x200 بكسل</p>
                         </div>
                         <div class="text-center">
                             <img id="imagePreview" src="" class="image-preview hidden" alt="معاينة الصورة">
                             <div id="imagePreviewPlaceholder" class="image-preview image-placeholder">
-                                ستظهر معاينة الصورة هنا
+                                معاينة الصورة
                             </div>
                         </div>
                     </div>
                 </div>
-                <button onclick="addItem()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition mt-2">
+                <button onclick="addItem()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition mt-2 transform hover:-translate-y-1 active:translate-y-0">
                     ➕ إضافة منتج جديد
                 </button>
             </div>
@@ -268,13 +346,13 @@
                     <table class="w-full text-sm">
                         <thead class="bg-gray-800 text-white">
                             <tr>
-                                <th class="p-2">#</th>
-                                <th class="p-2">الصورة</th>
-                                <th class="p-2">المنتج</th>
-                                <th class="p-2">التعبئة</th>
-                                <th class="p-2">السعر</th>
-                                <th class="p-2">الترتيب</th>
-                                <th class="p-2">الإجراءات</th>
+                                <th class="p-3">#</th>
+                                <th class="p-3">الصورة</th>
+                                <th class="p-3">المنتج</th>
+                                <th class="p-3">التعبئة</th>
+                                <th class="p-3">السعر</th>
+                                <th class="p-3">الترتيب</th>
+                                <th class="p-3">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody id="adminTableBody">
@@ -292,7 +370,7 @@
                 </div>
                 <div class="mb-3">
                     <textarea id="outputJson" class="w-full h-40 bg-gray-800 text-green-400 text-xs p-3 rounded font-mono resize-none" 
-                              readonly placeholder="ستظهر بيانات JSON هنا عند إضافة أو تعديل المنتجات..."></textarea>
+                              readonly placeholder="ستظهر بيانات JSON هنا..."></textarea>
                 </div>
                 <div class="flex flex-col gap-2">
                     <button onclick="copyJson()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-bold transition flex items-center justify-center gap-2">
@@ -315,12 +393,12 @@
         <div class="mb-6">
             <div class="relative max-w-xl mx-auto">
                 <input type="text" id="searchInput" placeholder="🔍 ابحث عن صنف..." 
-                       class="w-full p-4 pr-12 rounded-xl shadow border outline-none">
+                       class="w-full p-4 pr-12 rounded-xl shadow-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
             </div>
         </div>
 
         <!-- جدول المنتجات -->
-        <div class="table-container shadow-lg">
+        <div class="table-container">
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="sticky-header">
@@ -369,28 +447,26 @@
                 <div class="text-center">
                     <img id="newImagePreview" src="" class="w-32 h-32 object-cover rounded-lg mx-auto border-2 border-dashed border-gray-300 hidden">
                     <div id="newImagePreviewPlaceholder" class="w-32 h-32 rounded-lg mx-auto bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
-                        ستظهر معاينة الصورة هنا
+                        معاينة الصورة الجديدة
                     </div>
                 </div>
-                
-                <p class="text-xs text-gray-500 mt-2">اختر صورة جديدة للمنتج أو اتركه فارغاً للحفاظ على الصورة الحالية</p>
             </div>
             
             <div class="flex gap-2 mt-6">
-                <button onclick="updateProductImage()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold">
-                    💾 حفظ التغييرات
+                <button onclick="updateProductImage()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold transition">
+                    💾 حفظ
                 </button>
-                <button onclick="removeProductImage()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold">
-                    🗑️ حذف الصورة
+                <button onclick="removeProductImage()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold transition">
+                    🗑️ حذف
                 </button>
-                <button onclick="closeImageModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-bold">
+                <button onclick="closeImageModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-bold transition">
                     ✖️ إلغاء
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- نافذة تكبير الصورة للزبائن -->
+    <!-- نافذة تكبير الصورة -->
     <div id="zoomModal" class="image-modal">
         <div class="close-modal" onclick="closeZoomModal()">×</div>
         <img id="zoomedImage" class="modal-image" src="" alt="">
@@ -401,14 +477,23 @@
         // ============= المتغيرات الرئيسية =============
         let products = [];
         let currentEditIndex = -1;
-        let imageCache = new Map(); // ذاكرة تخزين مؤقت للصور
         let selectedFile = null;
         let newSelectedFile = null;
         
+        // ============= شاشة التحميل =============
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500);
+        }
+        
         // ============= نظام التحميل المتأخر الذكي =============
-        class LazyImageLoader {
+        class OptimizedImageLoader {
             constructor() {
                 this.observer = null;
+                this.imageCache = new Map();
                 this.initObserver();
             }
             
@@ -416,50 +501,52 @@
                 this.observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            const img = entry.target;
-                            this.loadImage(img);
-                            this.observer.unobserve(img);
+                            this.loadImage(entry.target);
+                            this.observer.unobserve(entry.target);
                         }
                     });
                 }, {
-                    rootMargin: '100px', // بدء التحميل قبل 100px من ظهور الصورة
+                    rootMargin: '150px',
                     threshold: 0.01
                 });
             }
             
             loadImage(img) {
                 const src = img.dataset.src;
-                if (!src) return;
-                
-                // التحقق من الذاكرة المؤقتة
-                if (imageCache.has(src)) {
-                    this.setImageSource(img, imageCache.get(src));
+                if (!src || src === 'data:,') {
+                    this.showPlaceholder(img);
                     return;
                 }
                 
+                // تحقق من الذاكرة المؤقتة
+                if (this.imageCache.has(src)) {
+                    this.setImage(img, this.imageCache.get(src));
+                    return;
+                }
+                
+                // تحميل الصورة
                 const tempImg = new Image();
                 tempImg.onload = () => {
-                    imageCache.set(src, src);
-                    this.setImageSource(img, src);
+                    this.imageCache.set(src, src);
+                    this.setImage(img, src);
                 };
                 
                 tempImg.onerror = () => {
-                    console.warn('فشل تحميل الصورة:', src);
-                    img.classList.remove('lazy-load');
-                    img.classList.add('image-placeholder');
-                    img.style.display = 'none';
-                    img.parentElement.innerHTML = '<div class="product-image image-placeholder">❌ خطأ</div>';
+                    this.showPlaceholder(img);
                 };
                 
                 tempImg.src = src;
             }
             
-            setImageSource(img, src) {
+            setImage(img, src) {
                 img.src = src;
                 img.classList.remove('lazy-load');
                 img.classList.add('loaded');
-                img.onload = null;
-                img.onerror = null;
+            }
+            
+            showPlaceholder(img) {
+                img.style.display = 'none';
+                img.parentElement.innerHTML = '<div class="product-image image-placeholder">بدون صورة</div>';
             }
             
             observe(image) {
@@ -468,14 +555,31 @@
                 }
             }
             
-            disconnect() {
-                if (this.observer) {
-                    this.observer.disconnect();
+            clearCache() {
+                this.imageCache.clear();
+            }
+            
+            preloadFirstImages() {
+                const images = document.querySelectorAll('.product-image[data-src]');
+                const count = Math.min(4, images.length);
+                
+                for (let i = 0; i < count; i++) {
+                    const img = images[i];
+                    const src = img.dataset.src;
+                    if (src && src !== 'data:,') {
+                        const tempImg = new Image();
+                        tempImg.onload = () => {
+                            img.src = src;
+                            img.classList.remove('lazy-load');
+                            img.classList.add('loaded');
+                        };
+                        tempImg.src = src;
+                    }
                 }
             }
         }
         
-        const lazyLoader = new LazyImageLoader();
+        const imageLoader = new OptimizedImageLoader();
         
         // ============= معاينة الصور =============
         function previewImage() {
@@ -485,15 +589,11 @@
             
             if (fileInput.files && fileInput.files[0]) {
                 selectedFile = fileInput.files[0];
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
+                compressImage(selectedFile, 200, 200, 0.8, (compressedData) => {
+                    preview.src = compressedData;
                     preview.classList.remove('hidden');
                     placeholder.classList.add('hidden');
-                };
-                
-                reader.readAsDataURL(selectedFile);
+                });
             }
         }
         
@@ -504,54 +604,83 @@
             
             if (fileInput.files && fileInput.files[0]) {
                 newSelectedFile = fileInput.files[0];
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
+                compressImage(newSelectedFile, 200, 200, 0.8, (compressedData) => {
+                    preview.src = compressedData;
                     preview.classList.remove('hidden');
                     placeholder.classList.add('hidden');
-                };
-                
-                reader.readAsDataURL(newSelectedFile);
+                });
             }
+        }
+        
+        // ============= ضغط الصور =============
+        function compressImage(file, maxWidth, maxHeight, quality, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width *= maxHeight / height;
+                            height = maxHeight;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedData = canvas.toDataURL('image/jpeg', quality);
+                    callback(compressedData);
+                };
+            };
         }
         
         // ============= تحميل البيانات =============
         async function loadData() {
             try {
+                const startTime = performance.now();
                 const response = await fetch('data.json');
                 products = await response.json();
+                
+                // تحسين البيانات
+                products = products.map(product => ({
+                    ...product,
+                    img: product.img || 'data:,'
+                }));
+                
                 renderAll();
                 
-                // تحميل أول 3 صور فوراً لتحسين تجربة المستخدم
+                // تحميل أول 4 صور فوراً
                 setTimeout(() => {
-                    loadFirstImages();
-                }, 300);
+                    imageLoader.preloadFirstImages();
+                }, 100);
+                
+                // إخفاء شاشة التحميل
+                setTimeout(hideLoadingScreen, 300);
+                
+                const loadTime = performance.now() - startTime;
+                console.log(`✅ تم تحميل ${products.length} منتج في ${loadTime.toFixed(0)} مللي ثانية`);
                 
             } catch (error) {
                 console.error('خطأ في تحميل البيانات:', error);
                 products = [];
                 renderAll();
-            }
-        }
-        
-        // ============= تحميل أول 3 صور فوراً =============
-        function loadFirstImages() {
-            const firstImages = document.querySelectorAll('.product-image[data-src]');
-            const imagesToLoad = Math.min(3, firstImages.length);
-            
-            for (let i = 0; i < imagesToLoad; i++) {
-                const img = firstImages[i];
-                const src = img.dataset.src;
-                if (src) {
-                    const tempImg = new Image();
-                    tempImg.onload = () => {
-                        img.src = src;
-                        img.classList.remove('lazy-load');
-                        img.classList.add('loaded');
-                    };
-                    tempImg.src = src;
-                }
+                hideLoadingScreen();
             }
         }
         
@@ -562,7 +691,7 @@
             updateOutput();
         }
         
-        // ============= عرض المنتجات للزبائن =============
+        // ============= عرض المنتجات للزبائن (بدون مشاكل escaping) =============
         function renderProducts() {
             const table = document.getElementById('productsTable');
             
@@ -577,55 +706,76 @@
                 return;
             }
             
-            let html = '';
+            // استخدام DocumentFragment لتسريع التحميل
+            const fragment = document.createDocumentFragment();
+            
             products.forEach((product, index) => {
-                const hasImage = product.img && product.img.trim() !== '';
+                const hasImage = product.img && product.img !== 'data:,';
                 
-                html += `
-                    <tr class="border-b hover:bg-gray-50" data-product-name="${product.name.toLowerCase()}">
-                        <td class="p-3">
-                            <div class="flex items-center justify-center">
-                                ${hasImage ? 
-                                    `<img data-src="${product.img}" 
-                                         alt="${product.name}"
-                                         class="product-image lazy-load clickable-image"
-                                         onclick="zoomProductImage('${escapeString(product.img)}', '${escapeString(product.name)}')">` :
-                                    `<div class="product-image image-placeholder">بدون صورة</div>`
-                                }
-                            </div>
-                        </td>
-                        <td class="p-3">
-                            <div class="font-medium text-gray-800">${product.name}</div>
-                        </td>
-                        <td class="p-3">
-                            <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
-                                ${product.pack || '---'}
-                            </span>
-                        </td>
-                        <td class="p-3">
-                            <span class="price-text font-bold">${product.price}</span>
-                        </td>
-                    </tr>
-                `;
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50 product-row';
+                row.dataset.productName = product.name.toLowerCase();
+                
+                // خلية الصورة
+                const imgCell = document.createElement('td');
+                imgCell.className = 'p-3';
+                
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'flex items-center justify-center';
+                
+                if (hasImage) {
+                    const img = document.createElement('img');
+                    img.dataset.src = product.img;
+                    img.alt = product.name;
+                    img.className = 'product-image lazy-load clickable-image';
+                    img.onclick = () => zoomProductImage(product.img, product.name);
+                    imgContainer.appendChild(img);
+                    imageLoader.observe(img);
+                } else {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'product-image image-placeholder';
+                    placeholder.textContent = 'بدون صورة';
+                    imgContainer.appendChild(placeholder);
+                }
+                
+                imgCell.appendChild(imgContainer);
+                row.appendChild(imgCell);
+                
+                // خلية اسم المنتج
+                const nameCell = document.createElement('td');
+                nameCell.className = 'p-3';
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'font-medium text-gray-800';
+                nameDiv.textContent = product.name;
+                nameCell.appendChild(nameDiv);
+                row.appendChild(nameCell);
+                
+                // خلية التعبئة
+                const packCell = document.createElement('td');
+                packCell.className = 'p-3';
+                const packSpan = document.createElement('span');
+                packSpan.className = 'inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm';
+                packSpan.textContent = product.pack || '---';
+                packCell.appendChild(packSpan);
+                row.appendChild(packCell);
+                
+                // خلية السعر
+                const priceCell = document.createElement('td');
+                priceCell.className = 'p-3';
+                const priceSpan = document.createElement('span');
+                priceSpan.className = 'price-text font-bold';
+                priceSpan.textContent = product.price;
+                priceCell.appendChild(priceSpan);
+                row.appendChild(priceCell);
+                
+                fragment.appendChild(row);
             });
             
-            table.innerHTML = html;
-            
-            // بدء مراقبة الصور للتحميل المتأخر
-            setTimeout(() => {
-                const lazyImages = document.querySelectorAll('.lazy-load');
-                lazyImages.forEach(img => {
-                    lazyLoader.observe(img);
-                });
-            }, 100);
+            table.innerHTML = '';
+            table.appendChild(fragment);
         }
         
-        // ============= دالة مساعدة للتهريب =============
-        function escapeString(str) {
-            return str ? str.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
-        }
-        
-        // ============= عرض جدول الإدارة =============
+        // ============= عرض جدول الإدارة (بدون مشاكل escaping) =============
         function renderAdminTable() {
             const table = document.getElementById('adminTableBody');
             
@@ -640,66 +790,129 @@
                 return;
             }
             
-            let html = '';
+            const fragment = document.createDocumentFragment();
+            
             products.forEach((product, index) => {
-                const hasImage = product.img && product.img.trim() !== '';
+                const hasImage = product.img && product.img !== 'data:,';
                 
-                html += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-2 text-center text-gray-500">${index + 1}</td>
-                        <td class="p-2">
-                            ${hasImage ? 
-                                `<img src="${product.img}" 
-                                     class="admin-image clickable-image"
-                                     onclick="zoomProductImage('${escapeString(product.img)}', '${escapeString(product.name)}')"
-                                     title="انقر لتكبير الصورة"
-                                     onerror="this.onerror=null; this.src=''; this.outerHTML='<div class=\"admin-image image-placeholder text-xs flex items-center justify-center\">❌</div>';">` :
-                                `<div class="admin-image image-placeholder text-xs flex items-center justify-center">لا توجد</div>`
-                            }
-                        </td>
-                        <td class="p-2">
-                            <input type="text" 
-                                   value="${product.name}" 
-                                   oninput="updateProduct(${index}, 'name', this.value)"
-                                   class="w-full p-2 border rounded text-sm">
-                        </td>
-                        <td class="p-2">
-                            <input type="text" 
-                                   value="${product.pack || ''}" 
-                                   oninput="updateProduct(${index}, 'pack', this.value)"
-                                   class="w-full p-2 border rounded text-sm">
-                        </td>
-                        <td class="p-2">
-                            <input type="text" 
-                                   value="${product.price}" 
-                                   oninput="updateProduct(${index}, 'price', this.value)"
-                                   class="w-full p-2 border rounded text-sm font-bold">
-                        </td>
-                        <td class="p-2">
-                            <div class="flex gap-1">
-                                <button onclick="moveProduct(${index}, -1)" class="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200" title="تحريك لأعلى">
-                                    ⬆️
-                                </button>
-                                <button onclick="moveProduct(${index}, 1)" class="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200" title="تحريك لأسفل">
-                                    ⬇️
-                                </button>
-                            </div>
-                        </td>
-                        <td class="p-2">
-                            <div class="flex flex-col gap-1">
-                                <button onclick="editImage(${index})" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
-                                    ✏️ تعديل الصورة
-                                </button>
-                                <button onclick="deleteProduct(${index})" class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm">
-                                    🗑️ حذف المنتج
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                
+                // الرقم
+                const numCell = document.createElement('td');
+                numCell.className = 'p-3 text-center text-gray-500';
+                numCell.textContent = index + 1;
+                row.appendChild(numCell);
+                
+                // الصورة
+                const imgCell = document.createElement('td');
+                imgCell.className = 'p-3';
+                
+                if (hasImage) {
+                    const img = document.createElement('img');
+                    img.src = product.img;
+                    img.className = 'admin-image clickable-image';
+                    img.title = 'انقر لتكبير الصورة';
+                    img.onclick = () => zoomProductImage(product.img, product.name);
+                    img.onerror = () => {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'admin-image image-placeholder text-xs flex items-center justify-center';
+                        placeholder.textContent = 'خطأ';
+                        img.parentNode.replaceChild(placeholder, img);
+                    };
+                    imgCell.appendChild(img);
+                } else {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'admin-image image-placeholder text-xs flex items-center justify-center';
+                    placeholder.textContent = 'لا توجد';
+                    imgCell.appendChild(placeholder);
+                }
+                row.appendChild(imgCell);
+                
+                // اسم المنتج
+                const nameCell = document.createElement('td');
+                nameCell.className = 'p-3';
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = product.name;
+                nameInput.className = 'w-full p-2 border rounded text-sm';
+                nameInput.oninput = () => updateProduct(index, 'name', nameInput.value);
+                nameCell.appendChild(nameInput);
+                row.appendChild(nameCell);
+                
+                // التعبئة
+                const packCell = document.createElement('td');
+                packCell.className = 'p-3';
+                const packInput = document.createElement('input');
+                packInput.type = 'text';
+                packInput.value = product.pack || '';
+                packInput.className = 'w-full p-2 border rounded text-sm';
+                packInput.oninput = () => updateProduct(index, 'pack', packInput.value);
+                packCell.appendChild(packInput);
+                row.appendChild(packCell);
+                
+                // السعر
+                const priceCell = document.createElement('td');
+                priceCell.className = 'p-3';
+                const priceInput = document.createElement('input');
+                priceInput.type = 'text';
+                priceInput.value = product.price;
+                priceInput.className = 'w-full p-2 border rounded text-sm font-bold';
+                priceInput.oninput = () => updateProduct(index, 'price', priceInput.value);
+                priceCell.appendChild(priceInput);
+                row.appendChild(priceCell);
+                
+                // الترتيب
+                const orderCell = document.createElement('td');
+                orderCell.className = 'p-3';
+                
+                const orderDiv = document.createElement('div');
+                orderDiv.className = 'flex gap-1';
+                
+                const upBtn = document.createElement('button');
+                upBtn.className = 'px-2 py-1 bg-gray-100 rounded hover:bg-gray-200';
+                upBtn.title = 'تحريك لأعلى';
+                upBtn.textContent = '⬆️';
+                upBtn.onclick = () => moveProduct(index, -1);
+                orderDiv.appendChild(upBtn);
+                
+                const downBtn = document.createElement('button');
+                downBtn.className = 'px-2 py-1 bg-gray-100 rounded hover:bg-gray-200';
+                downBtn.title = 'تحريك لأسفل';
+                downBtn.textContent = '⬇️';
+                downBtn.onclick = () => moveProduct(index, 1);
+                orderDiv.appendChild(downBtn);
+                
+                orderCell.appendChild(orderDiv);
+                row.appendChild(orderCell);
+                
+                // الإجراءات
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'p-3';
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'flex flex-col gap-1';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm';
+                editBtn.textContent = '✏️ تعديل الصورة';
+                editBtn.onclick = () => editImage(index);
+                actionsDiv.appendChild(editBtn);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm';
+                deleteBtn.textContent = '🗑️ حذف المنتج';
+                deleteBtn.onclick = () => deleteProduct(index);
+                actionsDiv.appendChild(deleteBtn);
+                
+                actionsCell.appendChild(actionsDiv);
+                row.appendChild(actionsCell);
+                
+                fragment.appendChild(row);
             });
             
-            table.innerHTML = html;
+            table.innerHTML = '';
+            table.appendChild(fragment);
         }
         
         // ============= تحديث بيانات المنتج =============
@@ -742,21 +955,19 @@
                 name: name,
                 pack: pack || '',
                 price: price,
-                img: ''
+                img: 'data:,'
             };
             
             // معالجة الصورة إذا وجدت
             if (selectedFile) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    newProduct.img = e.target.result;
+                compressImage(selectedFile, 200, 200, 0.7, (compressedData) => {
+                    newProduct.img = compressedData;
                     products.push(newProduct);
                     selectedFile = null;
                     renderAll();
                     clearForm();
                     alert('✅ تم إضافة المنتج مع الصورة بنجاح!');
-                };
-                reader.readAsDataURL(selectedFile);
+                });
             } else {
                 products.push(newProduct);
                 renderAll();
@@ -775,7 +986,7 @@
             selectedFile = null;
         }
         
-        // ============= تحديث JSON في لوحة التحكم =============
+        // ============= تحديث JSON =============
         function updateOutput() {
             const outputElement = document.getElementById('outputJson');
             const countElement = document.getElementById('productsCount');
@@ -790,7 +1001,7 @@
             }
         }
         
-        // ============= نسخ JSON =============
+        // ============= دوال النسخ والتحميل =============
         function copyJson() {
             const textarea = document.getElementById('outputJson');
             if (!textarea || !textarea.value) {
@@ -801,22 +1012,14 @@
             textarea.select();
             textarea.setSelectionRange(0, 99999);
             
-            try {
-                navigator.clipboard.writeText(textarea.value)
-                    .then(() => {
-                        alert(`✅ تم نسخ ${products.length} منتج إلى الحافظة`);
-                    })
-                    .catch(() => {
-                        document.execCommand('copy');
-                        alert(`✅ تم نسخ ${products.length} منتج إلى الحافظة`);
-                    });
-            } catch (error) {
-                document.execCommand('copy');
-                alert(`✅ تم نسخ ${products.length} منتج إلى الحافظة`);
-            }
+            navigator.clipboard.writeText(textarea.value)
+                .then(() => alert(`✅ تم نسخ ${products.length} منتج إلى الحافظة`))
+                .catch(() => {
+                    document.execCommand('copy');
+                    alert(`✅ تم نسخ ${products.length} منتج إلى الحافظة`);
+                });
         }
         
-        // ============= تحميل ملف JSON =============
         function downloadJSON() {
             if (products.length === 0) {
                 alert('⚠️ لا توجد بيانات للتحميل');
@@ -835,12 +1038,11 @@
             link.click();
             document.body.removeChild(link);
             
-            alert(`✅ تم تحميل ملف data.json يحتوي على ${products.length} منتج`);
+            alert(`✅ تم تحميل ملف data.json`);
         }
         
-        // ============= حذف جميع المنتجات =============
         function clearAllProducts() {
-            if (confirm('⚠️ هل أنت متأكد من حذف جميع المنتجات؟ هذا الإجراء لا يمكن التراجع عنه!')) {
+            if (confirm('⚠️ هل أنت متأكد من حذف جميع المنتجات؟')) {
                 products = [];
                 renderAll();
                 alert('✅ تم حذف جميع المنتجات');
@@ -856,7 +1058,7 @@
             const currentImagePlaceholder = document.getElementById('currentImagePlaceholder');
             const productName = document.getElementById('productName');
             
-            if (product.img && product.img.trim() !== '') {
+            if (product.img && product.img !== 'data:,') {
                 currentImage.src = product.img;
                 currentImage.style.display = 'block';
                 currentImagePlaceholder.style.display = 'none';
@@ -877,18 +1079,14 @@
         function updateProductImage() {
             if (currentEditIndex >= 0 && currentEditIndex < products.length) {
                 if (newSelectedFile) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        products[currentEditIndex].img = e.target.result;
+                    compressImage(newSelectedFile, 200, 200, 0.7, (compressedData) => {
+                        products[currentEditIndex].img = compressedData;
                         renderAll();
                         closeImageModal();
                         alert('✅ تم تحديث صورة المنتج بنجاح');
-                    };
-                    reader.readAsDataURL(newSelectedFile);
+                    });
                 } else {
-                    // لم يتم اختيار صورة جديدة، نبقي الصورة الحالية
                     closeImageModal();
-                    alert('ℹ️ لم يتم تغيير الصورة');
                 }
             }
         }
@@ -896,10 +1094,10 @@
         function removeProductImage() {
             if (confirm('هل أنت متأكد من حذف صورة هذا المنتج؟')) {
                 if (currentEditIndex >= 0 && currentEditIndex < products.length) {
-                    products[currentEditIndex].img = '';
+                    products[currentEditIndex].img = 'data:,';
                     renderAll();
                     closeImageModal();
-                    alert('✅ تم حذف صورة المنتج بنجاح');
+                    alert('✅ تم حذف صورة المنتج');
                 }
             }
         }
@@ -913,9 +1111,9 @@
             currentEditIndex = -1;
         }
         
-        // ============= تكبير الصورة للزبائن =============
+        // ============= تكبير الصورة =============
         function zoomProductImage(imageSrc, productName) {
-            if (!imageSrc || imageSrc.trim() === '') {
+            if (!imageSrc || imageSrc === 'data:,') {
                 alert('لا توجد صورة لهذا المنتج');
                 return;
             }
@@ -928,16 +1126,11 @@
             caption.textContent = productName;
             modal.style.display = 'flex';
             
-            modalImg.onerror = function() {
-                alert('تعذر تحميل الصورة');
-                closeZoomModal();
-            };
-            
-            modal.onclick = function(e) {
+            modal.onclick = (e) => {
                 if (e.target === modal) closeZoomModal();
             };
             
-            document.addEventListener('keydown', function(e) {
+            document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') closeZoomModal();
             });
         }
@@ -953,15 +1146,11 @@
             
             rows.forEach(row => {
                 const productName = row.dataset.productName || '';
-                if (productName.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                row.style.display = productName.includes(query) ? '' : 'none';
             });
         }
         
-        // ============= تسجيل الدخول للإدارة =============
+        // ============= إدارة لوحة التحكم =============
         function loginAdmin() {
             const password = prompt('🔐 أدخل كلمة المرور للإدارة:');
             if (password === 'admin123') {
@@ -975,32 +1164,37 @@
             document.getElementById('adminPanel').classList.toggle('hidden');
         }
         
+        // ============= تحديث الصور =============
+        function refreshImages() {
+            imageLoader.clearCache();
+            const images = document.querySelectorAll('.product-image[data-src]');
+            images.forEach(img => {
+                img.src = '';
+                img.classList.add('lazy-load');
+                img.classList.remove('loaded');
+                imageLoader.observe(img);
+            });
+            imageLoader.preloadFirstImages();
+            alert('🔄 تم تحديث الصور');
+        }
+        
         // ============= تحميل البيانات عند البدء =============
         loadData();
         
-        // ============= إضافة أحداث =============
+        // ============= إضافة الأحداث =============
         document.getElementById('searchInput').addEventListener('input', searchProducts);
         
-        // إضافة زر لتحديث جميع الصور
-        document.addEventListener('DOMContentLoaded', function() {
-            const header = document.querySelector('.premium-header');
-            const refreshBtn = document.createElement('button');
-            refreshBtn.innerHTML = '🔄 تحديث الصور';
-            refreshBtn.className = 'absolute left-4 top-4 bg-blue-600 text-white px-3 py-1 rounded text-sm opacity-0 hover:opacity-100 transition-opacity';
-            refreshBtn.onclick = function() {
-                imageCache.clear();
-                const images = document.querySelectorAll('.product-image[data-src]');
-                images.forEach(img => {
-                    img.src = '';
-                    img.classList.add('lazy-load');
-                    img.classList.remove('loaded');
-                    lazyLoader.observe(img);
-                });
-                loadFirstImages();
-                alert('✅ تم تحديث الصور');
-            };
-            header.style.position = 'relative';
-            header.appendChild(refreshBtn);
+        // تحسين تجربة المستخدم
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+        });
+        
+        // تحسين الأداء
+        window.addEventListener('load', () => {
+            setTimeout(hideLoadingScreen, 2000);
         });
         
     </script>
