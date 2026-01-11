@@ -135,6 +135,29 @@
             transform: scale(1.05);
             opacity: 0.9;
         }
+        
+        .image-preview {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px dashed #d1d5db;
+            margin: 10px auto;
+            display: block;
+        }
+        
+        .link-hint {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 5px;
+            text-align: center;
+        }
+        
+        .test-image-btn {
+            padding: 4px 8px;
+            font-size: 11px;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -164,8 +187,22 @@
                     <input type="text" id="itemPrice" placeholder="السعر" class="p-2 rounded-lg border font-bold">
                 </div>
                 <div class="mb-3">
-                    <input type="file" id="itemFile" accept="image/*" class="text-sm w-full">
-                    <p class="text-xs text-gray-500 mt-1">اختر صورة للمنتج (اختياري)</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <input type="text" id="itemImageUrl" placeholder="رابط الصورة (اختياري)" class="p-2 rounded-lg border w-full">
+                            <p class="text-xs text-gray-500 mt-1">أدخل رابط الصورة من الإنترنت</p>
+                        </div>
+                        <div class="text-center">
+                            <img id="imagePreview" src="" class="image-preview hidden" alt="معاينة الصورة">
+                            <div id="imagePreviewPlaceholder" class="image-preview image-placeholder">معاينة الصورة</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <button onclick="testImageUrl()" class="test-image-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm">
+                            🔍 اختبار رابط الصورة
+                        </button>
+                        <p class="link-hint">يمكنك استخدام روابط من: GitHub, Imgur, Cloudinary, إلخ</p>
+                    </div>
                 </div>
                 <button onclick="addItem()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold">
                     إضافة منتج جديد
@@ -184,6 +221,7 @@
                                 <th class="p-2">المنتج</th>
                                 <th class="p-2">التعبئة</th>
                                 <th class="p-2">السعر</th>
+                                <th class="p-2">رابط الصورة</th>
                                 <th class="p-2">الترتيب</th>
                                 <th class="p-2">الإجراءات</th>
                             </tr>
@@ -250,7 +288,7 @@
         </div>
     </div>
 
-    <!-- نافذة تعديل الصورة -->
+    <!-- نافذة تعديل صورة المنتج -->
     <div id="imageEditModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80">
         <div class="bg-white rounded-xl p-6 max-w-md w-full">
             <div class="flex justify-between items-center mb-4">
@@ -259,21 +297,50 @@
             </div>
             
             <div class="mb-4 text-center">
-                <img id="currentImage" src="" class="w-32 h-32 object-cover rounded-lg mx-auto mb-3">
-                <p id="productName" class="font-bold"></p>
+                <div class="relative inline-block">
+                    <img id="currentImage" src="" class="w-48 h-48 object-cover rounded-lg mx-auto mb-3">
+                    <div id="currentImagePlaceholder" class="w-48 h-48 rounded-lg mx-auto mb-3 bg-gray-100 flex items-center justify-center text-gray-400">
+                        لا توجد صورة حالية
+                    </div>
+                </div>
+                <p id="productName" class="font-bold text-lg"></p>
             </div>
             
             <div class="mb-4">
-                <input type="file" id="newImageFile" accept="image/*" class="w-full p-2 border rounded">
-                <p class="text-xs text-gray-500 mt-1">اختر صورة جديدة للمنتج</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة الجديدة</label>
+                        <input type="text" id="newImageUrl" placeholder="https://example.com/image.jpg" 
+                               class="w-full p-3 border rounded-lg" oninput="previewNewImage()">
+                    </div>
+                    <div class="text-center">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">معاينة الصورة</label>
+                        <img id="newImagePreview" src="" class="w-32 h-32 object-cover rounded-lg mx-auto border-2 border-dashed border-gray-300 hidden">
+                        <div id="newImagePreviewPlaceholder" class="w-32 h-32 rounded-lg mx-auto bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+                            ستظهر المعاينة هنا
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">أدخل رابط مباشر للصورة (JPG, PNG, GIF, إلخ)</p>
+                <div class="mt-3 flex gap-2">
+                    <button onclick="testNewImageUrl()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg text-sm">
+                        🔍 اختبار الرابط
+                    </button>
+                    <button onclick="clearNewImage()" class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-lg text-sm">
+                        🗑️ مسح الرابط
+                    </button>
+                </div>
             </div>
             
-            <div class="flex gap-2">
-                <button onclick="updateProductImage()" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold">
-                    حفظ التغييرات
+            <div class="flex gap-2 mt-6">
+                <button onclick="updateProductImage()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold">
+                    💾 حفظ التغييرات
                 </button>
-                <button onclick="closeImageModal()" class="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg font-bold">
-                    إلغاء
+                <button onclick="removeProductImage()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold">
+                    🗑️ حذف الصورة
+                </button>
+                <button onclick="closeImageModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 rounded-lg font-bold">
+                    ✖️ إلغاء
                 </button>
             </div>
         </div>
@@ -297,6 +364,9 @@
                 return '';
             }
             
+            // إزالة المسافات من البداية والنهاية
+            url = url.trim();
+            
             // إذا كان الرابط يشير إلى صفحة GitHub (يحتوي على /blob/)
             if (url.includes('github.com') && url.includes('/blob/')) {
                 // تحويل من رابط blob إلى رابط raw
@@ -311,6 +381,45 @@
             }
             
             return url;
+        }
+        
+        // ============= اختبار رابط الصورة =============
+        function testImageUrl() {
+            const urlInput = document.getElementById('itemImageUrl');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                alert('⚠️ الرابط فارغ');
+                return;
+            }
+            
+            const fixedUrl = fixGitHubImageUrl(url);
+            const previewImg = document.getElementById('imagePreview');
+            const placeholder = document.getElementById('imagePreviewPlaceholder');
+            
+            // إظهار مؤشر التحميل
+            previewImg.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            placeholder.textContent = 'جاري التحقق...';
+            placeholder.style.color = '#f59e0b';
+            
+            // اختبار تحميل الصورة
+            const testImg = new Image();
+            testImg.onload = function() {
+                previewImg.src = fixedUrl;
+                previewImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                urlInput.value = fixedUrl; // تحديث الرابط بالإصدار المصحح
+                alert('✅ الرابط صحيح! الصورة جاهزة');
+            };
+            
+            testImg.onerror = function() {
+                placeholder.textContent = 'الرابط غير صحيح';
+                placeholder.style.color = '#ef4444';
+                alert('❌ تعذر تحميل الصورة. الرابط غير صحيح أو الصورة غير موجودة');
+            };
+            
+            testImg.src = fixedUrl;
         }
         
         // ============= تحميل البيانات =============
@@ -369,7 +478,7 @@
                                     `<img src="${imgSrc}" 
                                          alt="${product.name}"
                                          class="product-image clickable-image"
-                                         onclick="zoomProductImage('${imgSrc}', '${product.name}')"
+                                         onclick="zoomProductImage('${imgSrc.replace(/'/g, "\\'")}', '${product.name.replace(/'/g, "\\'")}')"
                                          onerror="this.onerror=null; this.src=''; this.classList.add('image-placeholder'); this.classList.remove('clickable-image'); this.parentElement.innerHTML='<div class=\"product-image image-placeholder\">بدون صورة</div>';">` :
                                     `<div class="product-image image-placeholder">بدون صورة</div>`
                                 }
@@ -400,7 +509,7 @@
             if (products.length === 0) {
                 table.innerHTML = `
                     <tr>
-                        <td colspan="7" class="p-4 text-center text-gray-400">
+                        <td colspan="8" class="p-4 text-center text-gray-400">
                             لا توجد منتجات للإدارة
                         </td>
                     </tr>
@@ -412,6 +521,9 @@
             products.forEach((product, index) => {
                 const hasImage = product.img && product.img.trim() !== '';
                 const imgSrc = hasImage ? product.img : '';
+                const shortUrl = hasImage ? 
+                    (product.img.length > 30 ? product.img.substring(0, 30) + '...' : product.img) : 
+                    'لا يوجد';
                 
                 html += `
                     <tr class="border-b hover:bg-gray-50">
@@ -420,9 +532,9 @@
                             ${hasImage ? 
                                 `<img src="${imgSrc}" 
                                      class="admin-image clickable-image"
-                                     onclick="zoomProductImage('${imgSrc}', '${product.name}')"
+                                     onclick="zoomProductImage('${imgSrc.replace(/'/g, "\\'")}', '${product.name.replace(/'/g, "\\'")}')"
                                      title="انقر لتكبير الصورة"
-                                     onerror="this.onerror=null; this.src=''; this.classList.add('image-placeholder'); this.classList.remove('clickable-image'); this.outerHTML='<div class=\"admin-image image-placeholder text-xs flex items-center justify-center\">لا توجد</div>';">` :
+                                     onerror="this.onerror=null; this.src=''; this.classList.add('image-placeholder'); this.classList.remove('clickable-image'); this.outerHTML='<div class=\"admin-image image-placeholder text-xs flex items-center justify-center\">خطأ</div>';">` :
                                 `<div class="admin-image image-placeholder text-xs flex items-center justify-center">لا توجد</div>`
                             }
                         </td>
@@ -445,6 +557,17 @@
                                    class="w-full p-2 border rounded text-sm font-bold">
                         </td>
                         <td class="p-2">
+                            <input type="text" 
+                                   value="${product.img || ''}" 
+                                   oninput="updateProduct(${index}, 'img', this.value)"
+                                   placeholder="رابط الصورة"
+                                   class="w-full p-2 border rounded text-sm text-blue-600" 
+                                   style="font-family: monospace; font-size: 11px;">
+                            <div class="text-xs text-gray-500 mt-1 truncate" title="${product.img || ''}">
+                                ${shortUrl}
+                            </div>
+                        </td>
+                        <td class="p-2">
                             <div class="flex gap-1">
                                 <button onclick="moveProduct(${index}, -1)" class="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200" title="تحريك لأعلى">
                                     ⬆️
@@ -455,12 +578,12 @@
                             </div>
                         </td>
                         <td class="p-2">
-                            <div class="flex gap-2">
+                            <div class="flex flex-col gap-1">
                                 <button onclick="editImage(${index})" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
-                                    تغيير الصورة
+                                    ✏️ تعديل الصورة
                                 </button>
                                 <button onclick="deleteProduct(${index})" class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm">
-                                    حذف
+                                    🗑️ حذف المنتج
                                 </button>
                             </div>
                         </td>
@@ -502,7 +625,7 @@
             const name = document.getElementById('itemName').value.trim();
             const pack = document.getElementById('itemPack').value.trim();
             const price = document.getElementById('itemPrice').value.trim();
-            const fileInput = document.getElementById('itemFile');
+            const imageUrl = document.getElementById('itemImageUrl').value.trim();
             
             if (!name || !price) {
                 alert('⚠️ يرجى إدخال اسم المنتج والسعر');
@@ -513,31 +636,24 @@
                 name: name,
                 pack: pack || '',
                 price: price,
-                img: ''
+                img: imageUrl ? fixGitHubImageUrl(imageUrl) : ''
             };
             
-            // معالجة الصورة إذا وجدت
-            if (fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    newProduct.img = e.target.result;
-                    products.push(newProduct);
-                    renderAll();
-                    clearForm();
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                products.push(newProduct);
-                renderAll();
-                clearForm();
-            }
+            products.push(newProduct);
+            renderAll();
+            clearForm();
+            alert('✅ تم إضافة المنتج بنجاح!');
         }
         
         function clearForm() {
             document.getElementById('itemName').value = '';
             document.getElementById('itemPack').value = '';
             document.getElementById('itemPrice').value = '';
-            document.getElementById('itemFile').value = '';
+            document.getElementById('itemImageUrl').value = '';
+            document.getElementById('imagePreview').classList.add('hidden');
+            document.getElementById('imagePreviewPlaceholder').classList.remove('hidden');
+            document.getElementById('imagePreviewPlaceholder').textContent = 'معاينة الصورة';
+            document.getElementById('imagePreviewPlaceholder').style.color = '#9ca3af';
         }
         
         // ============= تحديث JSON في لوحة التحكم =============
@@ -614,37 +730,124 @@
             }
         }
         
-        // ============= دوال الصور =============
+        // ============= دوال تعديل الصورة =============
         function editImage(index) {
             currentEditIndex = index;
             const product = products[index];
             
-            document.getElementById('currentImage').src = product.img || '';
-            document.getElementById('productName').textContent = product.name;
+            const currentImage = document.getElementById('currentImage');
+            const currentImagePlaceholder = document.getElementById('currentImagePlaceholder');
+            const productName = document.getElementById('productName');
+            const newImageUrl = document.getElementById('newImageUrl');
+            
+            if (product.img && product.img.trim() !== '') {
+                currentImage.src = product.img;
+                currentImage.style.display = 'block';
+                currentImagePlaceholder.style.display = 'none';
+            } else {
+                currentImage.style.display = 'none';
+                currentImagePlaceholder.style.display = 'flex';
+            }
+            
+            productName.textContent = product.name;
+            newImageUrl.value = product.img || '';
+            
+            // معاينة الصورة الجديدة إذا كان هناك رابط
+            previewNewImage();
+            
             document.getElementById('imageEditModal').classList.remove('hidden');
         }
         
-        function updateProductImage() {
-            const fileInput = document.getElementById('newImageFile');
+        function previewNewImage() {
+            const url = document.getElementById('newImageUrl').value.trim();
+            const preview = document.getElementById('newImagePreview');
+            const placeholder = document.getElementById('newImagePreviewPlaceholder');
             
-            if (!fileInput.files[0]) {
-                alert('⚠️ يرجى اختيار صورة جديدة');
+            if (url) {
+                const fixedUrl = fixGitHubImageUrl(url);
+                preview.src = fixedUrl;
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+            } else {
+                preview.style.display = 'none';
+                placeholder.style.display = 'flex';
+            }
+        }
+        
+        function testNewImageUrl() {
+            const urlInput = document.getElementById('newImageUrl');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                alert('⚠️ الرابط فارغ');
                 return;
             }
             
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                products[currentEditIndex].img = e.target.result;
+            const fixedUrl = fixGitHubImageUrl(url);
+            const preview = document.getElementById('newImagePreview');
+            const placeholder = document.getElementById('newImagePreviewPlaceholder');
+            
+            // إظهار مؤشر التحميل
+            preview.style.display = 'block';
+            placeholder.style.display = 'none';
+            preview.src = '';
+            preview.style.filter = 'blur(2px)';
+            preview.style.opacity = '0.5';
+            
+            // اختبار تحميل الصورة
+            const testImg = new Image();
+            testImg.onload = function() {
+                preview.src = fixedUrl;
+                preview.style.filter = 'none';
+                preview.style.opacity = '1';
+                urlInput.value = fixedUrl; // تحديث الرابط بالإصدار المصحح
+                alert('✅ الرابط صحيح! الصورة جاهزة');
+            };
+            
+            testImg.onerror = function() {
+                preview.style.display = 'none';
+                placeholder.style.display = 'flex';
+                placeholder.textContent = 'الرابط غير صحيح';
+                placeholder.style.color = '#ef4444';
+                alert('❌ تعذر تحميل الصورة. الرابط غير صحيح أو الصورة غير موجودة');
+            };
+            
+            testImg.src = fixedUrl;
+        }
+        
+        function clearNewImage() {
+            document.getElementById('newImageUrl').value = '';
+            document.getElementById('newImagePreview').style.display = 'none';
+            document.getElementById('newImagePreviewPlaceholder').style.display = 'flex';
+            document.getElementById('newImagePreviewPlaceholder').textContent = 'ستظهر المعاينة هنا';
+            document.getElementById('newImagePreviewPlaceholder').style.color = '#9ca3af';
+        }
+        
+        function updateProductImage() {
+            const newImageUrl = document.getElementById('newImageUrl').value.trim();
+            
+            if (currentEditIndex >= 0 && currentEditIndex < products.length) {
+                products[currentEditIndex].img = newImageUrl ? fixGitHubImageUrl(newImageUrl) : '';
                 renderAll();
                 closeImageModal();
-                alert('✅ تم تحديث الصورة بنجاح');
-            };
-            reader.readAsDataURL(fileInput.files[0]);
+                alert('✅ تم تحديث صورة المنتج بنجاح');
+            }
+        }
+        
+        function removeProductImage() {
+            if (confirm('هل أنت متأكد من حذف صورة هذا المنتج؟')) {
+                if (currentEditIndex >= 0 && currentEditIndex < products.length) {
+                    products[currentEditIndex].img = '';
+                    renderAll();
+                    closeImageModal();
+                    alert('✅ تم حذف صورة المنتج بنجاح');
+                }
+            }
         }
         
         function closeImageModal() {
             document.getElementById('imageEditModal').classList.add('hidden');
-            document.getElementById('newImageFile').value = '';
+            clearNewImage();
             currentEditIndex = -1;
         }
         
@@ -716,6 +919,25 @@
         
         // ============= إضافة أحداث =============
         document.getElementById('searchInput').addEventListener('input', searchProducts);
+        
+        // تحديث معاينة الصورة عند الكتابة في رابط الصورة
+        document.getElementById('itemImageUrl').addEventListener('input', function() {
+            const url = this.value.trim();
+            const previewImg = document.getElementById('imagePreview');
+            const placeholder = document.getElementById('imagePreviewPlaceholder');
+            
+            if (url) {
+                const fixedUrl = fixGitHubImageUrl(url);
+                previewImg.src = fixedUrl;
+                previewImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                previewImg.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                placeholder.textContent = 'معاينة الصورة';
+                placeholder.style.color = '#9ca3af';
+            }
+        });
         
     </script>
 </body>
