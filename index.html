@@ -38,6 +38,66 @@
             color: #1e40af; 
             font-weight: 800; 
         }
+        
+        /* نافذة تكبير الصورة */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-image {
+            max-width: 90%;
+            max-height: 85vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            object-fit: contain;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            color: white;
+            font-size: 35px;
+            cursor: pointer;
+            background: rgba(0,0,0,0.6);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 1001;
+        }
+        
+        .close-modal:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+        
+        .modal-caption {
+            position: absolute;
+            bottom: 25px;
+            color: white;
+            text-align: center;
+            width: 100%;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+            margin: 0 20px;
+        }
     </style>
 </head>
 <body>
@@ -53,28 +113,75 @@
         
         <!-- لوحة الإدارة المخفية -->
         <div id="adminPanel" class="hidden bg-white rounded-xl shadow-lg p-4 mb-6 border border-gray-200">
-            <!-- تبسيط لوحة التحكم -->
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-gray-800">لوحة التحكم</h2>
                 <button onclick="toggleAdmin()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
             </div>
             
+            <!-- قسم إضافة منتج جديد -->
             <div class="bg-blue-50 p-4 rounded-lg mb-4">
-                <h3 class="font-bold text-blue-800 mb-2">إضافة منتج</h3>
-                <div class="space-y-3">
-                    <input type="text" id="itemName" placeholder="اسم المنتج" class="w-full p-2 rounded-lg border">
-                    <input type="text" id="itemPack" placeholder="التعبئة" class="w-full p-2 rounded-lg border">
-                    <input type="text" id="itemPrice" placeholder="السعر" class="w-full p-2 rounded-lg border font-bold">
-                    <input type="file" id="itemFile" accept="image/*" class="w-full text-sm">
+                <h3 class="font-bold text-blue-800 mb-2">إضافة منتج جديد</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                    <input type="text" id="itemName" placeholder="اسم المنتج" class="p-2 rounded-lg border">
+                    <input type="text" id="itemPack" placeholder="التعبئة" class="p-2 rounded-lg border">
+                    <input type="text" id="itemPrice" placeholder="السعر" class="p-2 rounded-lg border font-bold">
                 </div>
-                <button onclick="addItem()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold mt-3">
-                    إضافة منتج
+                <div class="mb-3">
+                    <input type="file" id="itemFile" accept="image/*" class="text-sm w-full">
+                    <p class="text-xs text-gray-500 mt-1">اختر صورة للمنتج (اختياري)</p>
+                </div>
+                <button onclick="addItem()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold">
+                    إضافة منتج جديد
                 </button>
             </div>
             
+            <!-- قائمة المنتجات للإدارة -->
             <div class="mb-4">
-                <h3 class="font-bold text-gray-800 mb-2">المنتجات</h3>
-                <div id="adminTableBody" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                <h3 class="font-bold text-gray-800 mb-2">المنتجات الحالية</h3>
+                <div class="overflow-x-auto rounded-lg border">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-800 text-white">
+                            <tr>
+                                <th class="p-2">#</th>
+                                <th class="p-2">الصورة</th>
+                                <th class="p-2">المنتج</th>
+                                <th class="p-2">التعبئة</th>
+                                <th class="p-2">السعر</th>
+                                <th class="p-2">الترتيب</th>
+                                <th class="p-2">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody">
+                            <!-- سيتم ملؤها تلقائياً -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- تصدير البيانات -->
+            <div class="bg-gray-900 p-4 rounded-lg">
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="text-white font-bold">تصدير البيانات (JSON)</h4>
+                    <span class="text-gray-400 text-sm" id="productsCount">0 منتج</span>
+                </div>
+                <div class="mb-3">
+                    <textarea id="outputJson" class="w-full h-40 bg-gray-800 text-green-400 text-xs p-3 rounded font-mono resize-none" 
+                              readonly placeholder="ستظهر بيانات JSON هنا عند إضافة أو تعديل المنتجات..."></textarea>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <button onclick="copyJson()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-bold transition flex items-center justify-center gap-2">
+                        <span>📋 نسخ JSON إلى الحافظة</span>
+                    </button>
+                    <button onclick="downloadJSON()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold transition flex items-center justify-center gap-2">
+                        <span>⬇️ تحميل ملف data.json</span>
+                    </button>
+                    <button onclick="clearAllProducts()" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold transition flex items-center justify-center gap-2">
+                        <span>🗑️ حذف جميع المنتجات</span>
+                    </button>
+                </div>
+                <p class="text-gray-400 text-xs mt-3 text-center">
+                    ⚠️ انسخ هذا الكود والصقه في ملف data.json على GitHub
+                </p>
             </div>
         </div>
 
@@ -99,118 +206,418 @@
                         </tr>
                     </thead>
                     <tbody id="productsTable">
-                        <!-- البيانات تظهر هنا -->
+                        <!-- سيتم ملؤها تلقائياً -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- نافذة تكبير الصورة -->
-    <div id="zoomModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/95">
+    <!-- نافذة تعديل الصورة -->
+    <div id="imageEditModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">تعديل صورة المنتج</h3>
+                <button onclick="closeImageModal()" class="text-2xl text-gray-400">&times;</button>
+            </div>
+            
+            <div class="mb-4 text-center">
+                <img id="currentImage" src="" class="w-32 h-32 object-cover rounded-lg mx-auto mb-3">
+                <p id="productName" class="font-bold"></p>
+            </div>
+            
+            <div class="mb-4">
+                <input type="file" id="newImageFile" accept="image/*" class="w-full p-2 border rounded">
+                <p class="text-xs text-gray-500 mt-1">اختر صورة جديدة للمنتج</p>
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="updateProductImage()" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold">
+                    حفظ التغييرات
+                </button>
+                <button onclick="closeImageModal()" class="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg font-bold">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تكبير الصورة للزبائن -->
+    <div id="zoomModal" class="image-modal">
         <div class="close-modal" onclick="closeZoomModal()">×</div>
-        <img id="zoomedImage" class="max-w-full max-h-[80vh] rounded-lg" src="" alt="">
-        <div id="zoomCaption" class="text-white text-center mt-3 text-lg font-bold"></div>
+        <img id="zoomedImage" class="modal-image" src="" alt="">
+        <div id="zoomCaption" class="modal-caption"></div>
     </div>
 
     <script>
-        // ============= أبسط حل للسرعة =============
-        
-        // 1. تحميل البيانات فوراً
-        window.addEventListener('load', function() {
-            loadDataFast();
-        });
-        
+        // ============= المتغيرات الرئيسية =============
         let products = [];
+        let currentEditIndex = -1;
         
-        // 2. أبسط دالة تحميل ممكنة
-        async function loadDataFast() {
+        // ============= تحميل البيانات =============
+        async function loadData() {
             try {
-                // جلب البيانات مباشرة بدون تأخير
                 const response = await fetch('data.json');
                 products = await response.json();
-                
-                // عرض البيانات فوراً
-                showProductsFast();
-                
+                renderAll();
             } catch (error) {
-                // إذا فشل التحميل، عرض رسالة بسيطة
-                document.getElementById('productsTable').innerHTML = `
-                    <tr>
-                        <td colspan="4" class="p-8 text-center text-gray-500">
-                            جاري تحميل البيانات...
-                        </td>
-                    </tr>
-                `;
-                
-                // محاولة أخرى بعد ثانيتين
-                setTimeout(loadDataFast, 2000);
+                console.error('خطأ في تحميل البيانات:', error);
+                products = [];
+                renderAll();
             }
         }
         
-        // 3. أبسط دالة لعرض المنتجات
-        function showProductsFast() {
+        // ============= عرض كل شيء =============
+        function renderAll() {
+            renderProducts();
+            renderAdminTable();
+            updateOutput(); // ✅ هذا السطر هو الأهم!
+        }
+        
+        // ============= عرض المنتجات للزبائن =============
+        function renderProducts() {
             const table = document.getElementById('productsTable');
-            let html = '';
             
-            for (let i = 0; i < products.length; i++) {
-                const product = products[i];
+            if (products.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-8 text-center text-gray-400">
+                            لا توجد منتجات مضافة بعد
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            products.forEach((product, index) => {
+                const imgSrc = product.img || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNMzIgMzRMMjYgNDBIMzhMMzIgMzRaTTMyIDMyTDM4IDI2SDI2TDMyIDMyWk0zMiAzNEMzMC4zNDMxIDM0IDI5IDMyLjY1NjkgMjkgMzFDMjkgMjkuMzQzMSAzMC4zNDMxIDI4IDMyIDI4QzMzLjY1NjkgMjggMzUgMjkuMzQzMSAzNSAzMUMzNSAzMi42NTY5IDMzLjY1NjkgMzQgMzIgMzRaIiBmaWxsPSIjQzBDMEMwIi8+PC9zdmc+';
                 
                 html += `
-                    <tr class="border-b hover:bg-gray-50">
+                    <tr class="border-b hover:bg-gray-50" data-product-name="${product.name.toLowerCase()}">
                         <td class="p-3">
-                            <img src="${product.img || ''}" 
-                                 alt="${product.name}"
-                                 class="w-12 h-12 object-cover rounded-lg cursor-pointer"
-                                 onclick="zoomImage('${product.img || ''}', '${product.name}')"
-                                 onerror="this.style.display='none'">
+                            <div class="flex items-center justify-center">
+                                <img src="${imgSrc}" 
+                                     alt="${product.name}"
+                                     class="w-12 h-12 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                     onclick="zoomProductImage('${product.img || ''}', '${product.name}')">
+                            </div>
                         </td>
-                        <td class="p-3 font-medium text-gray-800">${product.name}</td>
                         <td class="p-3">
-                            <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
+                            <div class="font-medium text-gray-800">${product.name}</div>
+                        </td>
+                        <td class="p-3">
+                            <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
                                 ${product.pack || '---'}
                             </span>
                         </td>
-                        <td class="p-3 font-bold text-blue-700">${product.price}</td>
+                        <td class="p-3">
+                            <span class="price-text font-bold">${product.price}</span>
+                        </td>
                     </tr>
                 `;
-            }
+            });
             
             table.innerHTML = html;
         }
         
-        // 4. البحث البسيط
-        function searchProducts() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const rows = document.querySelectorAll('#productsTable tr');
+        // ============= عرض جدول الإدارة =============
+        function renderAdminTable() {
+            const table = document.getElementById('adminTableBody');
             
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length > 1) {
-                    const productName = cells[1].textContent.toLowerCase();
-                    row.style.display = productName.includes(query) ? '' : 'none';
-                }
+            if (products.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="p-4 text-center text-gray-400">
+                            لا توجد منتجات للإدارة
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            products.forEach((product, index) => {
+                const imgSrc = product.img || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNMTYgMTdMMTMgMjBIMTlMMTYgMTdaTTE2IDE2TDE5IDEzSDEzTDE2IDE2Wk0xNiAxN0MxNS4xNzE2IDE3IDE0LjUgMTYuMzI4NCAxNC41IDE1LjVDMTQuNSAxNC42NzE2IDE1LjE3MTYgMTQgMTYgMTRDMTYuODI4NCAxNCAxNy41IDE0LjY3MTYgMTcuNSAxNS41QzE3LjUgMTYuMzI4NCAxNi44Mjg0IDE3IDE2IDE3WiIgZmlsbD0iI0MwQzBDMCIvPjwvc3ZnPg==';
+                
+                html += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-2 text-center text-gray-500">${index + 1}</td>
+                        <td class="p-2">
+                            <img src="${imgSrc}" 
+                                 class="w-10 h-10 object-cover rounded cursor-pointer"
+                                 onclick="zoomProductImage('${product.img || ''}', '${product.name}')"
+                                 title="انقر لتكبير الصورة">
+                        </td>
+                        <td class="p-2">
+                            <input type="text" 
+                                   value="${product.name}" 
+                                   oninput="updateProduct(${index}, 'name', this.value)"
+                                   class="w-full p-2 border rounded text-sm">
+                        </td>
+                        <td class="p-2">
+                            <input type="text" 
+                                   value="${product.pack || ''}" 
+                                   oninput="updateProduct(${index}, 'pack', this.value)"
+                                   class="w-full p-2 border rounded text-sm">
+                        </td>
+                        <td class="p-2">
+                            <input type="text" 
+                                   value="${product.price}" 
+                                   oninput="updateProduct(${index}, 'price', this.value)"
+                                   class="w-full p-2 border rounded text-sm font-bold">
+                        </td>
+                        <td class="p-2">
+                            <div class="flex gap-1">
+                                <button onclick="moveProduct(${index}, -1)" class="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200" title="تحريك لأعلى">
+                                    ⬆️
+                                </button>
+                                <button onclick="moveProduct(${index}, 1)" class="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200" title="تحريك لأسفل">
+                                    ⬇️
+                                </button>
+                            </div>
+                        </td>
+                        <td class="p-2">
+                            <div class="flex gap-2">
+                                <button onclick="editImage(${index})" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+                                    تغيير الصورة
+                                </button>
+                                <button onclick="deleteProduct(${index})" class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm">
+                                    حذف
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
             });
+            
+            table.innerHTML = html;
         }
         
-        // 5. تكبير الصورة البسيط
-        function zoomImage(src, name) {
-            if (!src) return;
+        // ============= تحديث بيانات المنتج =============
+        function updateProduct(index, field, value) {
+            if (index >= 0 && index < products.length) {
+                products[index][field] = value;
+                updateOutput();
+            }
+        }
+        
+        // ============= نقل منتج =============
+        function moveProduct(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < products.length) {
+                // تبديل المواقع
+                [products[index], products[newIndex]] = [products[newIndex], products[index]];
+                renderAll();
+            }
+        }
+        
+        // ============= حذف منتج =============
+        function deleteProduct(index) {
+            if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+                products.splice(index, 1);
+                renderAll();
+            }
+        }
+        
+        // ============= إضافة منتج جديد =============
+        function addItem() {
+            const name = document.getElementById('itemName').value.trim();
+            const pack = document.getElementById('itemPack').value.trim();
+            const price = document.getElementById('itemPrice').value.trim();
+            const fileInput = document.getElementById('itemFile');
             
-            document.getElementById('zoomedImage').src = src;
-            document.getElementById('zoomCaption').textContent = name;
-            document.getElementById('zoomModal').style.display = 'flex';
+            if (!name || !price) {
+                alert('⚠️ يرجى إدخال اسم المنتج والسعر');
+                return;
+            }
+            
+            const newProduct = {
+                name: name,
+                pack: pack || '',
+                price: price,
+                img: ''
+            };
+            
+            // معالجة الصورة إذا وجدت
+            if (fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    newProduct.img = e.target.result;
+                    products.push(newProduct);
+                    renderAll();
+                    clearForm();
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                products.push(newProduct);
+                renderAll();
+                clearForm();
+            }
+        }
+        
+        function clearForm() {
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemPack').value = '';
+            document.getElementById('itemPrice').value = '';
+            document.getElementById('itemFile').value = '';
+        }
+        
+        // ============= تحديث JSON في لوحة التحكم =============
+        function updateOutput() {
+            const outputElement = document.getElementById('outputJson');
+            const countElement = document.getElementById('productsCount');
+            
+            if (outputElement) {
+                // تحويل إلى JSON مع تنسيق جميل
+                const jsonString = JSON.stringify(products, null, 2);
+                outputElement.value = jsonString;
+            }
+            
+            if (countElement) {
+                countElement.textContent = `${products.length} منتج`;
+            }
+        }
+        
+        // ============= نسخ JSON =============
+        function copyJson() {
+            const textarea = document.getElementById('outputJson');
+            if (!textarea || !textarea.value) {
+                alert('⚠️ لا توجد بيانات للنسخ');
+                return;
+            }
+            
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // للهواتف
+            
+            try {
+                navigator.clipboard.writeText(textarea.value)
+                    .then(() => {
+                        alert(`✅ تم نسخ ${products.length} منتج إلى الحافظة`);
+                    })
+                    .catch(() => {
+                        // الطريقة القديمة
+                        document.execCommand('copy');
+                        alert(`✅ تم نسخ ${products.length} منتج إلى الحافظة`);
+                    });
+            } catch (error) {
+                document.execCommand('copy');
+                alert(`✅ تم نسخ ${products.length} منتج إلى الحافظة`);
+            }
+        }
+        
+        // ============= تحميل ملف JSON =============
+        function downloadJSON() {
+            if (products.length === 0) {
+                alert('⚠️ لا توجد بيانات للتحميل');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(products, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            
+            const link = document.createElement('a');
+            link.setAttribute('href', dataUri);
+            link.setAttribute('download', 'data.json');
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            alert(`✅ تم تحميل ملف data.json يحتوي على ${products.length} منتج`);
+        }
+        
+        // ============= حذف جميع المنتجات =============
+        function clearAllProducts() {
+            if (confirm('⚠️ هل أنت متأكد من حذف جميع المنتجات؟ هذا الإجراء لا يمكن التراجع عنه!')) {
+                products = [];
+                renderAll();
+                alert('✅ تم حذف جميع المنتجات');
+            }
+        }
+        
+        // ============= دوال الصور =============
+        function editImage(index) {
+            currentEditIndex = index;
+            const product = products[index];
+            
+            document.getElementById('currentImage').src = product.img || '';
+            document.getElementById('productName').textContent = product.name;
+            document.getElementById('imageEditModal').classList.remove('hidden');
+        }
+        
+        function updateProductImage() {
+            const fileInput = document.getElementById('newImageFile');
+            
+            if (!fileInput.files[0]) {
+                alert('⚠️ يرجى اختيار صورة جديدة');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                products[currentEditIndex].img = e.target.result;
+                renderAll();
+                closeImageModal();
+                alert('✅ تم تحديث الصورة بنجاح');
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+        
+        function closeImageModal() {
+            document.getElementById('imageEditModal').classList.add('hidden');
+            document.getElementById('newImageFile').value = '';
+            currentEditIndex = -1;
+        }
+        
+        // ============= تكبير الصورة للزبائن =============
+        function zoomProductImage(imageSrc, productName) {
+            if (!imageSrc) return;
+            
+            const modal = document.getElementById('zoomModal');
+            const modalImg = document.getElementById('zoomedImage');
+            const caption = document.getElementById('zoomCaption');
+            
+            modalImg.src = imageSrc;
+            caption.textContent = productName;
+            modal.style.display = 'flex';
+            
+            modal.onclick = function(e) {
+                if (e.target === modal) closeZoomModal();
+            };
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeZoomModal();
+            });
         }
         
         function closeZoomModal() {
             document.getElementById('zoomModal').style.display = 'none';
         }
         
-        // 6. إدارة بسيطة
+        // ============= البحث =============
+        function searchProducts() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#productsTable tr');
+            
+            rows.forEach(row => {
+                const productName = row.dataset.productName || '';
+                if (productName.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        // ============= تسجيل الدخول للإدارة =============
         function loginAdmin() {
-            const password = prompt('كلمة المرور:');
+            const password = prompt('🔐 أدخل كلمة المرور للإدارة:');
             if (password === 'admin123') {
-                document.getElementById('adminPanel').classList.toggle('hidden');
+                toggleAdmin();
+            } else if (password) {
+                alert('❌ كلمة المرور غير صحيحة');
             }
         }
         
@@ -218,66 +625,11 @@
             document.getElementById('adminPanel').classList.toggle('hidden');
         }
         
-        function addItem() {
-            const name = document.getElementById('itemName').value;
-            const pack = document.getElementById('itemPack').value;
-            const price = document.getElementById('itemPrice').value;
-            
-            if (name && price) {
-                products.unshift({
-                    name: name,
-                    pack: pack,
-                    price: price,
-                    img: ''
-                });
-                
-                showProductsFast();
-                
-                document.getElementById('itemName').value = '';
-                document.getElementById('itemPack').value = '';
-                document.getElementById('itemPrice').value = '';
-                document.getElementById('itemFile').value = '';
-            }
-        }
+        // ============= تحميل البيانات عند البدء =============
+        loadData();
         
-        // 7. إضافة حدث البحث
+        // ============= إضافة أحداث =============
         document.getElementById('searchInput').addEventListener('input', searchProducts);
-        
-        // 8. إغلاق النافذة بالزر ESC أو النقر خارجها
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeZoomModal();
-        });
-        
-        document.getElementById('zoomModal').addEventListener('click', function(e) {
-            if (e.target === this) closeZoomModal();
-        });
-        
-        // إضافة بعض الأنماط البسيطة
-        const style = document.createElement('style');
-        style.textContent = `
-            .close-modal {
-                position: absolute;
-                top: 20px;
-                left: 20px;
-                color: white;
-                font-size: 30px;
-                cursor: pointer;
-                background: rgba(0,0,0,0.5);
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .close-modal:hover {
-                background: rgba(255,255,255,0.2);
-            }
-            #zoomModal {
-                display: none;
-            }
-        `;
-        document.head.appendChild(style);
         
     </script>
 </body>
