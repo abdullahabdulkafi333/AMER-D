@@ -201,7 +201,7 @@
                         <button onclick="testImageUrl()" class="test-image-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm">
                             🔍 اختبار رابط الصورة
                         </button>
-                        <p class="link-hint">يمكنك استخدام روابط من: GitHub, Imgur, Cloudinary, إلخ</p>
+                        <p class="link-hint">استخدم روابط GitHub RAW: https://raw.githubusercontent.com/...</p>
                     </div>
                 </div>
                 <button onclick="addItem()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold">
@@ -298,7 +298,7 @@
             
             <div class="mb-4 text-center">
                 <div class="relative inline-block">
-                    <img id="currentImage" src="" class="w-48 h-48 object-cover rounded-lg mx-auto mb-3">
+                    <img id="currentImage" src="" class="w-48 h-48 object-cover rounded-lg mx-auto mb-3 hidden">
                     <div id="currentImagePlaceholder" class="w-48 h-48 rounded-lg mx-auto mb-3 bg-gray-100 flex items-center justify-center text-gray-400">
                         لا توجد صورة حالية
                     </div>
@@ -310,7 +310,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">رابط الصورة الجديدة</label>
-                        <input type="text" id="newImageUrl" placeholder="https://example.com/image.jpg" 
+                        <input type="text" id="newImageUrl" placeholder="https://raw.githubusercontent.com/..." 
                                class="w-full p-3 border rounded-lg" oninput="previewNewImage()">
                     </div>
                     <div class="text-center">
@@ -321,7 +321,7 @@
                         </div>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 mt-2">أدخل رابط مباشر للصورة (JPG, PNG, GIF, إلخ)</p>
+                <p class="text-xs text-gray-500 mt-2">استخدم روابط GitHub RAW مباشرة لضمان العمل</p>
                 <div class="mt-3 flex gap-2">
                     <button onclick="testNewImageUrl()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg text-sm">
                         🔍 اختبار الرابط
@@ -358,26 +358,26 @@
         let products = [];
         let currentEditIndex = -1;
         
-        // ============= دالة لإصلاح روابط GitHub =============
+        // ============= دالة محسنة لإصلاح روابط GitHub =============
         function fixGitHubImageUrl(url) {
-            if (!url || url.trim() === '') {
+            if (!url || typeof url !== 'string' || url.trim() === '') {
                 return '';
             }
             
-            // إزالة المسافات من البداية والنهاية
             url = url.trim();
             
-            // إذا كان الرابط يشير إلى صفحة GitHub (يحتوي على /blob/)
-            if (url.includes('github.com') && url.includes('/blob/')) {
-                // تحويل من رابط blob إلى رابط raw
-                url = url.replace('/blob/', '/raw/');
-            }
-            
-            // إذا كان الرابط من GitHub ولم يكن raw
-            if (url.includes('github.com') && !url.includes('/raw/')) {
-                // تحويل إلى رابط raw مباشر
-                url = url.replace('github.com', 'raw.githubusercontent.com');
-                url = url.replace('/blob/', '/');
+            // إذا كان الرابط يحتوي على github.com
+            if (url.includes('github.com')) {
+                // تحويل جميع الأشكال إلى raw.githubusercontent.com
+                if (url.includes('/blob/')) {
+                    // تحويل من: https://github.com/user/repo/blob/main/path/to/image.jpg
+                    // إلى: https://raw.githubusercontent.com/user/repo/main/path/to/image.jpg
+                    url = url.replace('github.com', 'raw.githubusercontent.com')
+                             .replace('/blob/', '/');
+                } else if (!url.includes('raw.githubusercontent.com')) {
+                    // إذا كان github.com فقط بدون blob
+                    url = url.replace('github.com', 'raw.githubusercontent.com');
+                }
             }
             
             return url;
@@ -403,9 +403,21 @@
             placeholder.textContent = 'جاري التحقق...';
             placeholder.style.color = '#f59e0b';
             
-            // اختبار تحميل الصورة
+            // اختبار تحميل الصورة مع معالجة الأخطاء
             const testImg = new Image();
+            testImg.crossOrigin = 'anonymous';
+            
+            // إعداد مهلة زمنية (timeout)
+            const timeout = setTimeout(() => {
+                testImg.onload = null;
+                testImg.onerror = null;
+                placeholder.textContent = 'المهلة انتهت';
+                placeholder.style.color = '#ef4444';
+                alert('⏱️ انتهت المهلة. الرابط بطيء جداً أو غير متاح');
+            }, 10000);
+            
             testImg.onload = function() {
+                clearTimeout(timeout);
                 previewImg.src = fixedUrl;
                 previewImg.classList.remove('hidden');
                 placeholder.classList.add('hidden');
@@ -414,9 +426,10 @@
             };
             
             testImg.onerror = function() {
+                clearTimeout(timeout);
                 placeholder.textContent = 'الرابط غير صحيح';
                 placeholder.style.color = '#ef4444';
-                alert('❌ تعذر تحميل الصورة. الرابط غير صحيح أو الصورة غير موجودة');
+                alert('❌ تعذر تحميل الصورة. تأكد من:\n1. الرابط المباشر للصورة\n2. استخدام روابط GitHub RAW\n3. الصورة موجودة فعلاً');
             };
             
             testImg.src = fixedUrl;
@@ -430,7 +443,7 @@
                 
                 // إصلاح روابط الصور عند التحميل
                 products.forEach(product => {
-                    if (product.img && product.img.trim() !== '') {
+                    if (product.img && typeof product.img === 'string' && product.img.trim() !== '') {
                         product.img = fixGitHubImageUrl(product.img);
                     }
                 });
@@ -450,7 +463,7 @@
             updateOutput();
         }
         
-        // ============= عرض المنتجات للزبائن =============
+        // ============= عرض المنتجات للزبائن (بدون مشاكل escaping) =============
         function renderProducts() {
             const table = document.getElementById('productsTable');
             
@@ -465,44 +478,78 @@
                 return;
             }
             
-            let html = '';
+            // استخدام createElement بدلاً من innerHTML لتفادي مشاكل escaping
+            table.innerHTML = '';
+            
             products.forEach((product, index) => {
                 const hasImage = product.img && product.img.trim() !== '';
-                const imgSrc = hasImage ? product.img : '';
                 
-                html += `
-                    <tr class="border-b hover:bg-gray-50" data-product-name="${product.name.toLowerCase()}">
-                        <td class="p-3">
-                            <div class="flex items-center justify-center">
-                                ${hasImage ? 
-                                    `<img src="${imgSrc}" 
-                                         alt="${product.name}"
-                                         class="product-image clickable-image"
-                                         onclick="zoomProductImage('${imgSrc.replace(/'/g, "\\'")}', '${product.name.replace(/'/g, "\\'")}')"
-                                         onerror="this.onerror=null; this.src=''; this.classList.add('image-placeholder'); this.classList.remove('clickable-image'); this.parentElement.innerHTML='<div class=\"product-image image-placeholder\">بدون صورة</div>';">` :
-                                    `<div class="product-image image-placeholder">بدون صورة</div>`
-                                }
-                            </div>
-                        </td>
-                        <td class="p-3">
-                            <div class="font-medium text-gray-800">${product.name}</div>
-                        </td>
-                        <td class="p-3">
-                            <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
-                                ${product.pack || '---'}
-                            </span>
-                        </td>
-                        <td class="p-3">
-                            <span class="price-text font-bold">${product.price}</span>
-                        </td>
-                    </tr>
-                `;
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                row.dataset.productName = product.name.toLowerCase();
+                
+                // خلية الصورة
+                const imgCell = document.createElement('td');
+                imgCell.className = 'p-3';
+                
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'flex items-center justify-center';
+                
+                if (hasImage) {
+                    const img = document.createElement('img');
+                    img.src = product.img;
+                    img.alt = product.name;
+                    img.className = 'product-image clickable-image';
+                    img.onclick = () => zoomProductImage(product.img, product.name);
+                    img.onerror = function() {
+                        this.onerror = null;
+                        this.src = '';
+                        this.className = 'product-image image-placeholder';
+                        this.parentElement.innerHTML = '<div class="product-image image-placeholder">بدون صورة</div>';
+                    };
+                    imgContainer.appendChild(img);
+                } else {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'product-image image-placeholder';
+                    placeholder.textContent = 'بدون صورة';
+                    imgContainer.appendChild(placeholder);
+                }
+                
+                imgCell.appendChild(imgContainer);
+                row.appendChild(imgCell);
+                
+                // خلية اسم المنتج
+                const nameCell = document.createElement('td');
+                nameCell.className = 'p-3';
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'font-medium text-gray-800';
+                nameDiv.textContent = product.name;
+                nameCell.appendChild(nameDiv);
+                row.appendChild(nameCell);
+                
+                // خلية التعبئة
+                const packCell = document.createElement('td');
+                packCell.className = 'p-3';
+                const packSpan = document.createElement('span');
+                packSpan.className = 'inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm';
+                packSpan.textContent = product.pack || '---';
+                packCell.appendChild(packSpan);
+                row.appendChild(packCell);
+                
+                // خلية السعر
+                const priceCell = document.createElement('td');
+                priceCell.className = 'p-3';
+                const priceSpan = document.createElement('span');
+                priceSpan.className = 'price-text font-bold';
+                priceSpan.textContent = product.price;
+                priceCell.appendChild(priceSpan);
+                row.appendChild(priceCell);
+                
+                table.appendChild(row);
             });
-            
-            table.innerHTML = html;
         }
         
-        // ============= عرض جدول الإدارة =============
+        // ============= عرض جدول الإدارة (بدون مشاكل escaping) =============
         function renderAdminTable() {
             const table = document.getElementById('adminTableBody');
             
@@ -517,81 +564,153 @@
                 return;
             }
             
-            let html = '';
+            // استخدام createElement لتفادي مشاكل escaping
+            table.innerHTML = '';
+            
             products.forEach((product, index) => {
                 const hasImage = product.img && product.img.trim() !== '';
-                const imgSrc = hasImage ? product.img : '';
                 const shortUrl = hasImage ? 
                     (product.img.length > 30 ? product.img.substring(0, 30) + '...' : product.img) : 
                     'لا يوجد';
                 
-                html += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-2 text-center text-gray-500">${index + 1}</td>
-                        <td class="p-2">
-                            ${hasImage ? 
-                                `<img src="${imgSrc}" 
-                                     class="admin-image clickable-image"
-                                     onclick="zoomProductImage('${imgSrc.replace(/'/g, "\\'")}', '${product.name.replace(/'/g, "\\'")}')"
-                                     title="انقر لتكبير الصورة"
-                                     onerror="this.onerror=null; this.src=''; this.classList.add('image-placeholder'); this.classList.remove('clickable-image'); this.outerHTML='<div class=\"admin-image image-placeholder text-xs flex items-center justify-center\">خطأ</div>';">` :
-                                `<div class="admin-image image-placeholder text-xs flex items-center justify-center">لا توجد</div>`
-                            }
-                        </td>
-                        <td class="p-2">
-                            <input type="text" 
-                                   value="${product.name}" 
-                                   oninput="updateProduct(${index}, 'name', this.value)"
-                                   class="w-full p-2 border rounded text-sm">
-                        </td>
-                        <td class="p-2">
-                            <input type="text" 
-                                   value="${product.pack || ''}" 
-                                   oninput="updateProduct(${index}, 'pack', this.value)"
-                                   class="w-full p-2 border rounded text-sm">
-                        </td>
-                        <td class="p-2">
-                            <input type="text" 
-                                   value="${product.price}" 
-                                   oninput="updateProduct(${index}, 'price', this.value)"
-                                   class="w-full p-2 border rounded text-sm font-bold">
-                        </td>
-                        <td class="p-2">
-                            <input type="text" 
-                                   value="${product.img || ''}" 
-                                   oninput="updateProduct(${index}, 'img', this.value)"
-                                   placeholder="رابط الصورة"
-                                   class="w-full p-2 border rounded text-sm text-blue-600" 
-                                   style="font-family: monospace; font-size: 11px;">
-                            <div class="text-xs text-gray-500 mt-1 truncate" title="${product.img || ''}">
-                                ${shortUrl}
-                            </div>
-                        </td>
-                        <td class="p-2">
-                            <div class="flex gap-1">
-                                <button onclick="moveProduct(${index}, -1)" class="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200" title="تحريك لأعلى">
-                                    ⬆️
-                                </button>
-                                <button onclick="moveProduct(${index}, 1)" class="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200" title="تحريك لأسفل">
-                                    ⬇️
-                                </button>
-                            </div>
-                        </td>
-                        <td class="p-2">
-                            <div class="flex flex-col gap-1">
-                                <button onclick="editImage(${index})" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
-                                    ✏️ تعديل الصورة
-                                </button>
-                                <button onclick="deleteProduct(${index})" class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm">
-                                    🗑️ حذف المنتج
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                
+                // الرقم
+                const numCell = document.createElement('td');
+                numCell.className = 'p-2 text-center text-gray-500';
+                numCell.textContent = index + 1;
+                row.appendChild(numCell);
+                
+                // الصورة
+                const imgCell = document.createElement('td');
+                imgCell.className = 'p-2';
+                
+                if (hasImage) {
+                    const img = document.createElement('img');
+                    img.src = product.img;
+                    img.className = 'admin-image clickable-image';
+                    img.title = 'انقر لتكبير الصورة';
+                    img.onclick = () => zoomProductImage(product.img, product.name);
+                    img.onerror = function() {
+                        this.onerror = null;
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'admin-image image-placeholder text-xs flex items-center justify-center';
+                        placeholder.textContent = 'خطأ';
+                        this.parentNode.replaceChild(placeholder, this);
+                    };
+                    imgCell.appendChild(img);
+                } else {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'admin-image image-placeholder text-xs flex items-center justify-center';
+                    placeholder.textContent = 'لا توجد';
+                    imgCell.appendChild(placeholder);
+                }
+                row.appendChild(imgCell);
+                
+                // اسم المنتج
+                const nameCell = document.createElement('td');
+                nameCell.className = 'p-2';
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = product.name;
+                nameInput.className = 'w-full p-2 border rounded text-sm';
+                nameInput.oninput = () => updateProduct(index, 'name', nameInput.value);
+                nameCell.appendChild(nameInput);
+                row.appendChild(nameCell);
+                
+                // التعبئة
+                const packCell = document.createElement('td');
+                packCell.className = 'p-2';
+                const packInput = document.createElement('input');
+                packInput.type = 'text';
+                packInput.value = product.pack || '';
+                packInput.className = 'w-full p-2 border rounded text-sm';
+                packInput.oninput = () => updateProduct(index, 'pack', packInput.value);
+                packCell.appendChild(packInput);
+                row.appendChild(packCell);
+                
+                // السعر
+                const priceCell = document.createElement('td');
+                priceCell.className = 'p-2';
+                const priceInput = document.createElement('input');
+                priceInput.type = 'text';
+                priceInput.value = product.price;
+                priceInput.className = 'w-full p-2 border rounded text-sm font-bold';
+                priceInput.oninput = () => updateProduct(index, 'price', priceInput.value);
+                priceCell.appendChild(priceInput);
+                row.appendChild(priceCell);
+                
+                // رابط الصورة
+                const imgUrlCell = document.createElement('td');
+                imgUrlCell.className = 'p-2';
+                
+                const imgUrlInput = document.createElement('input');
+                imgUrlInput.type = 'text';
+                imgUrlInput.value = product.img || '';
+                imgUrlInput.placeholder = 'رابط الصورة';
+                imgUrlInput.className = 'w-full p-2 border rounded text-sm text-blue-600';
+                imgUrlInput.style.fontFamily = 'monospace';
+                imgUrlInput.style.fontSize = '11px';
+                imgUrlInput.oninput = () => updateProduct(index, 'img', imgUrlInput.value);
+                imgUrlCell.appendChild(imgUrlInput);
+                
+                const urlPreview = document.createElement('div');
+                urlPreview.className = 'text-xs text-gray-500 mt-1 truncate';
+                urlPreview.title = product.img || '';
+                urlPreview.textContent = shortUrl;
+                imgUrlCell.appendChild(urlPreview);
+                
+                row.appendChild(imgUrlCell);
+                
+                // الترتيب
+                const orderCell = document.createElement('td');
+                orderCell.className = 'p-2';
+                
+                const orderDiv = document.createElement('div');
+                orderDiv.className = 'flex gap-1';
+                
+                const upBtn = document.createElement('button');
+                upBtn.className = 'px-2 py-1 bg-gray-100 rounded hover:bg-gray-200';
+                upBtn.title = 'تحريك لأعلى';
+                upBtn.textContent = '⬆️';
+                upBtn.onclick = () => moveProduct(index, -1);
+                orderDiv.appendChild(upBtn);
+                
+                const downBtn = document.createElement('button');
+                downBtn.className = 'px-2 py-1 bg-gray-100 rounded hover:bg-gray-200';
+                downBtn.title = 'تحريك لأسفل';
+                downBtn.textContent = '⬇️';
+                downBtn.onclick = () => moveProduct(index, 1);
+                orderDiv.appendChild(downBtn);
+                
+                orderCell.appendChild(orderDiv);
+                row.appendChild(orderCell);
+                
+                // الإجراءات
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'p-2';
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'flex flex-col gap-1';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm';
+                editBtn.textContent = '✏️ تعديل الصورة';
+                editBtn.onclick = () => editImage(index);
+                actionsDiv.appendChild(editBtn);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm';
+                deleteBtn.textContent = '🗑️ حذف المنتج';
+                deleteBtn.onclick = () => deleteProduct(index);
+                actionsDiv.appendChild(deleteBtn);
+                
+                actionsCell.appendChild(actionsDiv);
+                row.appendChild(actionsCell);
+                
+                table.appendChild(row);
             });
-            
-            table.innerHTML = html;
         }
         
         // ============= تحديث بيانات المنتج =============
@@ -796,7 +915,20 @@
             
             // اختبار تحميل الصورة
             const testImg = new Image();
+            testImg.crossOrigin = 'anonymous';
+            
+            const timeout = setTimeout(() => {
+                testImg.onload = null;
+                testImg.onerror = null;
+                preview.style.display = 'none';
+                placeholder.style.display = 'flex';
+                placeholder.textContent = 'المهلة انتهت';
+                placeholder.style.color = '#ef4444';
+                alert('⏱️ انتهت المهلة. الرابط بطيء جداً');
+            }, 10000);
+            
             testImg.onload = function() {
+                clearTimeout(timeout);
                 preview.src = fixedUrl;
                 preview.style.filter = 'none';
                 preview.style.opacity = '1';
@@ -805,11 +937,12 @@
             };
             
             testImg.onerror = function() {
+                clearTimeout(timeout);
                 preview.style.display = 'none';
                 placeholder.style.display = 'flex';
                 placeholder.textContent = 'الرابط غير صحيح';
                 placeholder.style.color = '#ef4444';
-                alert('❌ تعذر تحميل الصورة. الرابط غير صحيح أو الصورة غير موجودة');
+                alert('❌ تعذر تحميل الصورة. تأكد من الرابط');
             };
             
             testImg.src = fixedUrl;
@@ -938,6 +1071,9 @@
                 placeholder.style.color = '#9ca3af';
             }
         });
+        
+        // نصيحة: روابط GitHub الصحيحة يجب أن تكون:
+        // https://raw.githubusercontent.com/اسم المستخدم/اسم المستودع/الفرع/مسار/الصورة.jpg
         
     </script>
 </body>
