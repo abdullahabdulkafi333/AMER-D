@@ -47,6 +47,66 @@
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
+        
+        /* نافذة تكبير الصورة */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-image {
+            max-width: 90%;
+            max-height: 85vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            object-fit: contain;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            color: white;
+            font-size: 35px;
+            cursor: pointer;
+            background: rgba(0,0,0,0.6);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 1001;
+        }
+        
+        .close-modal:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+        
+        .modal-caption {
+            position: absolute;
+            bottom: 25px;
+            color: white;
+            text-align: center;
+            width: 100%;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+            margin: 0 20px;
+        }
     </style>
 </head>
 <body>
@@ -152,7 +212,7 @@
         </div>
     </div>
 
-    <!-- نافذة تعديل الصورة -->
+    <!-- نافذة تعديل الصورة (للإدارة فقط) -->
     <div id="imageEditModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80">
         <div class="bg-white rounded-xl p-6 max-w-md w-full">
             <div class="flex justify-between items-center mb-4">
@@ -179,6 +239,13 @@
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- نافذة تكبير الصورة للزبائن -->
+    <div id="zoomModal" class="image-modal">
+        <div class="close-modal" onclick="closeZoomModal()">×</div>
+        <img id="zoomedImage" class="modal-image" src="" alt="">
+        <div id="zoomCaption" class="modal-caption"></div>
     </div>
 
     <script>
@@ -260,6 +327,41 @@
             localStorage.removeItem(CACHE_TIMESTAMP);
         }
         
+        // دالة تكبير الصورة للزبائن
+        function zoomProductImage(imageSrc, productName) {
+            const modal = document.getElementById('zoomModal');
+            const modalImg = document.getElementById('zoomedImage');
+            const caption = document.getElementById('zoomCaption');
+            
+            modalImg.src = imageSrc || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNMTI4IDEzMkwxMDQgMTYwSDE1MkwxMjggMTMyWk0xMjggMTI4TDE1MiAxMDRIMTA0TDEyOCAxMjhaTTEyOCAxMzJDMjUuMzQzMSAxMzIgMTI1IDEzMC42NTcgMTI1IDEyOEMxMjUgMTI1LjM0MyAxMjUuMzQzIDEyNSAxMjggMTI1QzEzMC42NTcgMTI1IDEzMSAxMjUuMzQzIDEzMSAxMjhDMTMxIDEzMC42NTcgMTMwLjY1NyAxMzIgMTI4IDEzMloiIGZpbGw9IiNDMEMwQzAiLz48L3N2Zz4=';
+            caption.textContent = productName;
+            modal.style.display = 'flex';
+            
+            // إغلاق النافذة عند النقر خارج الصورة
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    closeZoomModal();
+                }
+            };
+            
+            // إغلاق النافذة بمفتاح ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeZoomModal();
+                }
+            });
+        }
+        
+        // إغلاق نافذة التكبير
+        function closeZoomModal() {
+            document.getElementById('zoomModal').style.display = 'none';
+        }
+        
+        // دالة تحدد إذا كان المستخدم مسؤولاً أم زبوناً
+        function isAdminPanelOpen() {
+            return !document.getElementById('adminPanel').classList.contains('hidden');
+        }
+        
         function renderProducts() {
             const table = document.getElementById('productsTable');
             if (products.length === 0) {
@@ -279,7 +381,14 @@
                 const row = document.createElement('tr');
                 row.className = 'border-b hover:bg-gray-50 transition-colors';
                 
+                // أيقونة بديلة إذا لم توجد صورة
                 const imgSrc = product.img || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNMzIgMzRMMjYgNDBIMzhMMzIgMzRaTTMyIDMyTDM4IDI2SDI2TDMyIDMyWk0zMiAzNEMzMC4zNDMxIDM0IDI5IDMyLjY1NjkgMjkgMzFDMjkgMjkuMzQzMSAzMC4zNDMxIDI4IDMyIDI4QzMzLjY1NjkgMjggMzUgMjkuMzQzMSAzNSAzMUMzNSAzMi42NTY5IDMzLjY1NjkgMzQgMzIgMzRaIiBmaWxsPSIjQzBDMEMwIi8+PC9zdmc+';
+                
+                // إذا كانت لوحة الإدارة مفتوحة: زر التعديل
+                // إذا كانت مغلقة: تكبير الصورة للزبائن
+                const clickHandler = isAdminPanelOpen() ? 
+                    `editImage(${index})` : 
+                    `zoomProductImage('${product.img}', '${product.name}')`;
                 
                 row.innerHTML = `
                     <td class="p-3">
@@ -287,7 +396,8 @@
                             <img src="${imgSrc}" 
                                  alt="${product.name}"
                                  class="w-12 h-12 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                                 onclick="editImage(${index})">
+                                 onclick="${clickHandler}"
+                                 style="cursor: pointer;">
                         </div>
                     </td>
                     <td class="p-3">
@@ -323,8 +433,10 @@
                 row.innerHTML = `
                     <td class="p-2">
                         <img src="${product.img || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNMTYgMTdMMTMgMjBIMTlMMTYgMTdaTTE2IDE2TDE5IDEzSDEzTDE2IDE2Wk0xNiAxN0MxNS4xNzE2IDE3IDE0LjUgMTYuMzI4NCAxNC41IDE1LjVDMTQuNSAxNC42NzE2IDE1LjE3MTYgMTQgMTYgMTRDMTYuODI4NCAxNCAxNy41IDE0LjY3MTYgMTcuNSAxNS41QzE3LjUgMTYuMzI4NCAxNi44Mjg0IDE3IDE2IDE3WiIgZmlsbD0iI0MwQzBDMCIvPjwvc3ZnPg=='}" 
-                             class="w-8 h-8 object-cover rounded cursor-pointer"
-                             onclick="editImage(${index})">
+                             class="w-8 h-8 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                             onclick="zoomProductImage('${product.img}', '${product.name}')"
+                             style="cursor: pointer;"
+                             title="انقر لتكبير الصورة">
                     </td>
                     <td class="p-2">
                         <input type="text" 
@@ -409,12 +521,15 @@
         }
         
         function editImage(index) {
-            currentEditIndex = index;
-            const product = products[index];
-            
-            document.getElementById('currentImage').src = product.img || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNNjQgNjZMNTEgODBINzdMNjQgNjZaTTY0IDY0TDc3IDUwSDUxTDY0IDY0Wk02NCA2NkM2Mi4zNDMxIDY2IDYxIDY0LjY1NjkgNjEgNjNDNjEgNjEuMzQzMSA2Mi4zNDMxIDYwIDY0IDYwQzY1LjY1NjkgNjAgNjcgNjEuMzQzMSA2NyA2M0M2cgNjQuNjU2OSA2NS42NTY5IDY2IDY0IDY2WiIgZmlsbD0iI0MwQzBDMCIvPjwvc3Zn+';
-            document.getElementById('productName').textContent = product.name;
-            document.getElementById('imageEditModal').classList.remove('hidden');
+            // هذه الدالة للإدارة فقط
+            if (isAdminPanelOpen()) {
+                currentEditIndex = index;
+                const product = products[index];
+                
+                document.getElementById('currentImage').src = product.img || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNNjQgNjZMNTEgODBINzdMNjQgNjZaTTY0IDY0TDc3IDUwSDUxTDY0IDY0Wk02NCA2NkM2Mi4zNDMxIDY2IDYxIDY0LjY1NjkgNjEgNjNDNjEgNjEuMzQzMSA2Mi4zNDMxIDYwIDY0IDYwQzY1LjY1NjkgNjAgNjcgNjEuMzQzMSA2NyA2M0M2NyA2NC42NTY5IDY1LjY1NjkgNjYgNjQgNjZaIiBmaWxsPSIjQzBDMEMwIi8+PC9zdmc+';
+                document.getElementById('productName').textContent = product.name;
+                document.getElementById('imageEditModal').classList.remove('hidden');
+            }
         }
         
         function updateProductImage() {
@@ -481,7 +596,9 @@
         }
         
         function toggleAdmin() {
-            document.getElementById('adminPanel').classList.toggle('hidden');
+            const isHidden = document.getElementById('adminPanel').classList.toggle('hidden');
+            // إعادة عرض المنتجات لتحديث سلوك النقر
+            renderProducts();
         }
         
         function showLoading() {
