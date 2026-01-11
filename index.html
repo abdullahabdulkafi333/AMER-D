@@ -255,28 +255,6 @@
             margin: 0 20px;
             backdrop-filter: blur(10px);
         }
-        
-        /* زر تحديث الصور */
-        .refresh-btn {
-            position: absolute;
-            left: 20px;
-            top: 20px;
-            background: rgba(255,255,255,0.15);
-            color: white;
-            border: 2px solid rgba(255,255,255,0.3);
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s;
-        }
-        
-        .refresh-btn:hover {
-            background: rgba(255,255,255,0.25);
-            transform: translateY(-2px);
-        }
     </style>
 </head>
 <body>
@@ -289,9 +267,6 @@
 
     <header class="premium-header text-white pt-12 pb-16 text-center" onclick="loginAdmin()">
         <div class="container mx-auto px-4">
-            <button class="refresh-btn" onclick="refreshImages()" title="تحديث جميع الصور">
-                🔄 تحديث الصور
-            </button>
             <h1 class="text-3xl md:text-4xl font-black mb-2">شركة عامر دهيمش</h1>
             <div class="header-line"></div>
         </div>
@@ -691,7 +666,7 @@
             updateOutput();
         }
         
-        // ============= عرض المنتجات للزبائن (بدون مشاكل escaping) =============
+        // ============= عرض المنتجات للزبائن =============
         function renderProducts() {
             const table = document.getElementById('productsTable');
             
@@ -775,7 +750,7 @@
             table.appendChild(fragment);
         }
         
-        // ============= عرض جدول الإدارة (بدون مشاكل escaping) =============
+        // ============= عرض جدول الإدارة =============
         function renderAdminTable() {
             const table = document.getElementById('adminTableBody');
             
@@ -1162,20 +1137,6 @@
         
         function toggleAdmin() {
             document.getElementById('adminPanel').classList.toggle('hidden');
-        }
-        
-        // ============= تحديث الصور =============
-        function refreshImages() {
-            imageLoader.clearCache();
-            const images = document.querySelectorAll('.product-image[data-src]');
-            images.forEach(img => {
-                img.src = '';
-                img.classList.add('lazy-load');
-                img.classList.remove('loaded');
-                imageLoader.observe(img);
-            });
-            imageLoader.preloadFirstImages();
-            alert('🔄 تم تحديث الصور');
         }
         
         // ============= تحميل البيانات عند البدء =============
