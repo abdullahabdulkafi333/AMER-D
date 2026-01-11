@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شركة عامر دهيمش - قائمة الأسعار</title>
+    <title>شركة عامر دهيمش - نظام إدارة الأسعار</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
@@ -15,24 +15,31 @@
             padding-bottom: 5rem;
         }
 
-        /* تجميد رأس الجدول */
+        /* التصميم الجديد للخط تحت الاسم */
+        .header-line {
+            height: 4px;
+            width: 80px;
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            margin: 12px auto 0;
+            border-radius: 2px;
+        }
+
         .sticky-header {
             position: sticky;
             top: 0;
             z-index: 40;
-            background: #ffffff;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         .table-container {
-            border-radius: 20px;
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
             background: white;
+            border: 1px solid #e2e8f0;
         }
-
-        tr { transition: background 0.2s; }
-        tr:hover { background-color: #f1f5f9; }
 
         .price-text {
             font-size: 1rem;
@@ -40,83 +47,98 @@
             color: #1e40af;
         }
 
-        /* تحسين مظهر أزرار الترتيب */
-        .sort-btn {
-            padding: 2px 8px;
-            border-radius: 6px;
-            background: #f1f5f9;
+        /* تنسيق لوحة الإدارة المتقدمة */
+        .admin-input-cell {
+            background: #fdfdfd;
+            border: 1px solid #f1f5f9;
+            border-radius: 8px;
+            padding: 4px 8px;
+            width: 100%;
+            outline: none;
             transition: all 0.2s;
         }
-        .sort-btn:hover { background: #e2e8f0; color: #1e40af; }
+        .admin-input-cell:focus { border-color: #3b82f6; background: white; }
     </style>
 </head>
 <body>
 
-    <header class="premium-header text-white pt-12 text-center cursor-pointer" onclick="loginAdmin()">
-        <h1 class="text-3xl md:text-5xl font-black tracking-tight">شركة عامر دهيمش</h1>
+    <header class="premium-header text-white pt-16 text-center cursor-pointer select-none" onclick="loginAdmin()">
+        <div class="container mx-auto px-4">
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight drop-shadow-xl">شركة عامر دهيمش</h1>
+            <div class="header-line"></div>
+        </div>
     </header>
 
-    <div class="container mx-auto px-2 md:px-4 max-w-4xl -mt-16">
+    <div class="container mx-auto px-2 md:px-4 max-w-5xl -mt-16">
         
-        <div id="adminPanel" class="hidden bg-white rounded-[30px] shadow-2xl p-6 mb-10 border border-slate-200">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-bold">لوحة إدارة الترتيب والأصناف</h2>
-                <button onclick="toggleAdmin()" class="text-slate-400 text-2xl">&times;</button>
+        <div id="adminPanel" class="hidden bg-white rounded-[32px] shadow-2xl p-6 md:p-10 mb-10 border border-slate-200">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-2xl font-black text-slate-800 tracking-wide">لوحة التحكم والمزامنة</h2>
+                <button onclick="toggleAdmin()" class="text-slate-300 hover:text-red-500 text-3xl">&times;</button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6 bg-slate-50 p-4 rounded-2xl">
-                <input type="text" id="itemName" placeholder="الصنف" class="p-3 rounded-xl border outline-none text-sm">
-                <input type="text" id="itemPack" placeholder="التعبئة" class="p-3 rounded-xl border outline-none text-sm">
-                <input type="text" id="itemPrice" placeholder="السعر" class="p-3 rounded-xl border outline-none text-sm font-bold">
-                <input type="file" id="itemFile" accept="image/*" class="text-[10px] mt-2">
-                <button onclick="addItem()" class="md:col-span-4 bg-blue-600 text-white py-3 rounded-xl font-bold mt-2">إضافة منتج جديد</button>
+            <div class="bg-slate-50 p-6 rounded-3xl mb-10 border border-slate-100">
+                <h3 class="text-sm font-bold text-slate-500 mb-4 uppercase tracking-widest">إضافة صنف جديد</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <input type="text" id="itemName" placeholder="اسم الصنف" class="p-4 rounded-2xl border bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="itemPack" placeholder="التعبئة" class="p-4 rounded-2xl border bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="itemPrice" placeholder="السعر" class="p-4 rounded-2xl border bg-white outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                    <div class="relative">
+                        <input type="file" id="itemFile" accept="image/*" class="w-full text-[10px] mt-2 cursor-pointer">
+                    </div>
+                </div>
+                <button onclick="addItem()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black transition shadow-lg">إضافة وحفظ التعديلات</button>
             </div>
 
-            <div class="overflow-hidden border rounded-xl">
+            <div class="overflow-x-auto rounded-2xl border mb-8">
                 <table class="w-full text-right text-xs">
-                    <thead class="bg-slate-800 text-white">
+                    <thead class="bg-slate-800 text-white uppercase">
                         <tr>
-                            <th class="p-3">الصنف</th>
-                            <th class="p-3">ترتيب</th>
-                            <th class="p-3">حذف</th>
+                            <th class="p-4">الصورة</th>
+                            <th class="p-4">اسم الصنف</th>
+                            <th class="p-4">التعبئة</th>
+                            <th class="p-4">السعر</th>
+                            <th class="p-4">الترتيب</th>
+                            <th class="p-4 text-center">حذف</th>
                         </tr>
                     </thead>
                     <tbody id="adminTableBody"></tbody>
                 </table>
             </div>
 
-            <div class="mt-6 bg-slate-900 p-4 rounded-xl flex justify-between items-center">
-                <textarea id="outputJson" class="hidden"></textarea>
-                <span class="text-blue-400 text-xs font-bold italic">قم بالترتيب ثم انسخ الكود ⬅️</span>
-                <button onclick="copyJson()" class="bg-blue-500 text-white px-5 py-2 rounded-lg font-bold text-xs">نسخ كود التحديث 📋</button>
+            <div class="bg-slate-900 p-6 rounded-3xl">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-blue-400 font-bold text-xs">كود التحديث الشامل (Ready to Copy)</span>
+                    <button onclick="copyJson()" class="bg-white text-black px-6 py-2 rounded-xl text-[11px] font-black hover:bg-blue-500 hover:text-white transition">نسخ الكود وتحديث GitHub 📋</button>
+                </div>
+                <textarea id="outputJson" class="w-full h-32 bg-transparent text-slate-500 font-mono text-[10px] outline-none border-none resize-none" readonly></textarea>
             </div>
         </div>
 
-        <div class="relative mb-6">
+        <div class="relative mb-8 max-w-2xl mx-auto">
             <input type="text" id="searchInput" onkeyup="search()" placeholder="بحث سريع عن صنف..." 
-                   class="w-full p-5 pr-12 rounded-2xl shadow-sm border-none outline-none text-md">
-            <span class="absolute right-4 top-5 opacity-20">🔍</span>
+                   class="w-full p-6 pr-14 rounded-[2rem] shadow-xl border-none outline-none text-lg bg-white/80 backdrop-blur-md">
+            <span class="absolute right-6 top-6 opacity-20 text-xl">🔍</span>
         </div>
 
         <div class="table-container overflow-x-auto">
-            <table class="w-full text-right border-collapse">
-                <thead class="sticky-header shadow-sm">
-                    <tr class="bg-white border-b-2 border-slate-100">
-                        <th class="p-4 text-slate-500 font-extrabold text-sm md:text-base">الصورة</th>
-                        <th class="p-4 text-slate-500 font-extrabold text-sm md:text-base">الصنف</th>
-                        <th class="p-4 text-slate-500 font-extrabold text-sm md:text-base">التعبئة</th>
-                        <th class="p-4 text-slate-500 font-extrabold text-sm md:text-base">السعر</th>
+            <table class="w-full text-right">
+                <thead class="sticky-header">
+                    <tr class="border-b-2 border-slate-100">
+                        <th class="p-5 text-slate-400 font-bold text-xs uppercase tracking-widest">الصورة</th>
+                        <th class="p-5 text-slate-400 font-bold text-xs uppercase tracking-widest">الصنف</th>
+                        <th class="p-5 text-slate-400 font-bold text-xs uppercase tracking-widest">التعبئة</th>
+                        <th class="p-5 text-slate-400 font-bold text-xs uppercase tracking-widest">السعر</th>
                     </tr>
                 </thead>
-                <tbody id="grid" class="divide-y divide-slate-50">
-                    </tbody>
+                <tbody id="grid" class="divide-y divide-slate-50"></tbody>
             </table>
         </div>
-        <p class="text-center text-slate-400 text-[10px] mt-8 pb-10">شركة عامر دهيمش - جميع الحقوق محفوظة</p>
+        <p class="text-center text-slate-400 text-[10px] mt-10 pb-10">شركة عامر دهيمش - الجودة أولاً</p>
     </div>
 
-    <div id="modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onclick="this.style.display='none'">
-        <img id="zoomImg" src="" class="max-w-full max-h-[90vh] rounded-2xl">
+    <div id="modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md" onclick="this.style.display='none'">
+        <img id="zoomImg" src="" class="max-w-full max-h-[85vh] rounded-3xl shadow-2xl border-2 border-white/10">
     </div>
 
     <script>
@@ -128,7 +150,7 @@
                 products = data;
                 renderUI();
             }).catch(() => {
-                document.getElementById('grid').innerHTML = '<tr><td colspan="4" class="p-10 text-center opacity-30 italic">بانتظار البيانات...</td></tr>';
+                document.getElementById('grid').innerHTML = '<tr><td colspan="4" class="p-20 text-center opacity-20">بانتظار مزامنة البيانات من GitHub</td></tr>';
             });
 
         function renderUI() {
@@ -138,47 +160,71 @@
             adminTable.innerHTML = '';
 
             products.forEach((item, index) => {
-                // عرض الزبون (الجدول)
+                // عرض الزبائن
                 grid.innerHTML += `
-                    <tr>
-                        <td class="p-3 md:p-4 w-20 md:w-32">
-                            <img src="${item.img}" onclick="zoom('${item.img}')" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl cursor-zoom-in border border-slate-100">
+                    <tr class="hover:bg-blue-50/30 transition">
+                        <td class="p-4 w-24">
+                            <img src="${item.img}" onclick="zoom('${item.img}')" class="w-20 h-20 object-cover rounded-2xl cursor-zoom-in border">
                         </td>
-                        <td class="p-3 md:p-4">
-                            <h3 class="text-[13px] md:text-[14px] font-bold text-slate-800 leading-tight">${item.name}</h3>
-                        </td>
-                        <td class="p-3 md:p-4">
-                            <span class="text-[12px] md:text-[13px] font-black text-slate-900 bg-slate-100 px-2 py-1 rounded-lg">${item.pack}</span>
-                        </td>
-                        <td class="p-3 md:p-4">
-                            <span class="price-text whitespace-nowrap">${item.price}</span>
-                        </td>
+                        <td class="p-4"><h3 class="text-sm font-bold text-slate-800">${item.name}</h3></td>
+                        <td class="p-4"><span class="text-xs font-black text-slate-900 bg-slate-100 px-3 py-1 rounded-full">${item.pack}</span></td>
+                        <td class="p-4"><span class="price-text">${item.price}</span></td>
                     </tr>`;
 
-                // لوحة التحكم (ترتيب وحذف)
+                // عرض لوحة التحكم (التعديل المباشر)
                 adminTable.innerHTML += `
-                    <tr class="border-b">
-                        <td class="p-3 font-bold">${item.name}</td>
-                        <td class="p-3 flex gap-1">
-                            <button onclick="moveItem(${index}, -1)" class="sort-btn">🔼</button>
-                            <button onclick="moveItem(${index}, 1)" class="sort-btn">🔽</button>
-                        </td>
+                    <tr class="border-b border-slate-50">
                         <td class="p-3">
-                            <button onclick="deleteItem(${index})" class="text-red-400 hover:text-red-600">🗑</button>
+                            <div class="relative w-12 h-12">
+                                <img src="${item.img}" class="w-full h-full object-cover rounded-lg">
+                                <input type="file" onchange="changeItemImage(${index}, this)" class="absolute inset-0 opacity-0 cursor-pointer">
+                            </div>
+                        </td>
+                        <td class="p-3"><input type="text" value="${item.name}" oninput="updateVal(${index}, 'name', this.value)" class="admin-input-cell font-bold"></td>
+                        <td class="p-3"><input type="text" value="${item.pack}" oninput="updateVal(${index}, 'pack', this.value)" class="admin-input-cell"></td>
+                        <td class="p-3"><input type="text" value="${item.price}" oninput="updateVal(${index}, 'price', this.value)" class="admin-input-cell font-black text-blue-600"></td>
+                        <td class="p-3">
+                            <div class="flex gap-1">
+                                <button onclick="moveItem(${index}, -1)" class="bg-slate-100 p-1 rounded hover:bg-slate-200">🔼</button>
+                                <button onclick="moveItem(${index}, 1)" class="bg-slate-100 p-1 rounded hover:bg-slate-200">🔽</button>
+                            </div>
+                        </td>
+                        <td class="p-3 text-center">
+                            <button onclick="deleteItem(${index})" class="text-red-300 hover:text-red-500">🗑</button>
                         </td>
                     </tr>`;
             });
-            document.getElementById('outputJson').value = JSON.stringify(products);
+            updateOutput();
         }
 
-        // ميزة ترتيب الأصناف
-        function moveItem(index, direction) {
-            const newIndex = index + direction;
-            if (newIndex >= 0 && newIndex < products.length) {
-                const temp = products[index];
-                products[index] = products[newIndex];
-                products[newIndex] = temp;
-                renderUI();
+        function updateVal(index, key, val) {
+            products[index][key] = val;
+            updateOutput();
+            // هنا لا نعيد رندرة الـ UI بالكامل لكي لا يفقد الـ Input التركيز (Focus)
+            // لكن نقوم بتحديث جدول الزبائن فقط في الخلفية
+            syncClientTable();
+        }
+
+        function syncClientTable() {
+            const rows = document.querySelectorAll('#grid tr');
+            products.forEach((item, index) => {
+                if(rows[index]) {
+                    rows[index].querySelector('h3').innerText = item.name;
+                    rows[index].querySelector('.price-text').innerText = item.price;
+                    rows[index].querySelector('span').innerText = item.pack;
+                }
+            });
+        }
+
+        function changeItemImage(index, input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    products[index].img = e.target.result;
+                    renderUI();
+                };
+                reader.readAsDataURL(file);
             }
         }
 
@@ -188,28 +234,43 @@
             const pack = document.getElementById('itemPack').value;
             const price = document.getElementById('itemPrice').value;
 
-            if (!file || !name) return alert("يرجى إكمال البيانات");
+            if (!file || !name) return alert("يرجى اختيار صورة واسم صنف على الأقل");
 
             const reader = new FileReader();
-            reader.onload = function() {
-                products.push({ name, pack, price, img: reader.result });
+            reader.onload = function(e) {
+                products.push({ name, pack, price, img: e.target.result });
+                renderUI();
                 document.getElementById('itemName').value = '';
                 document.getElementById('itemPack').value = '';
                 document.getElementById('itemPrice').value = '';
-                renderUI();
             };
             reader.readAsDataURL(file);
         }
 
+        function moveItem(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < products.length) {
+                [products[index], products[newIndex]] = [products[newIndex], products[index]];
+                renderUI();
+            }
+        }
+
         function deleteItem(index) {
-            if(confirm('حذف هذا الصنف؟')) { products.splice(index, 1); renderUI(); }
+            if(confirm('سيتم حذف الصنف من الكود المولد، هل أنت متأكد؟')) {
+                products.splice(index, 1);
+                renderUI();
+            }
+        }
+
+        function updateOutput() {
+            document.getElementById('outputJson').value = JSON.stringify(products);
         }
 
         function copyJson() {
             const text = document.getElementById('outputJson');
             text.select();
             document.execCommand('copy');
-            alert("تم النسخ! حدث ملف GitHub الآن بالترتيب الجديد.");
+            alert("تم نسخ الكود الشامل! ✅\nالآن اذهب لـ GitHub والصقه في data.json واحفظ التغييرات.");
         }
 
         function zoom(src) { document.getElementById('zoomImg').src = src; document.getElementById('modal').style.display = 'flex'; }
@@ -222,7 +283,7 @@
         }
 
         function loginAdmin() {
-            if(prompt("كلمة مرور الإدارة:") === "admin123") toggleAdmin();
+            if(prompt("كلمة سر الإدارة:") === "admin123") toggleAdmin();
         }
 
         function toggleAdmin() { document.getElementById('adminPanel').classList.toggle('hidden'); }
