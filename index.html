@@ -98,6 +98,43 @@
             border-radius: 8px;
             margin: 0 20px;
         }
+        
+        /* تحسين عرض الصور */
+        .product-image {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            background-color: #f9fafb;
+        }
+        
+        .admin-image {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+        }
+        
+        .image-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f3f4f6;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+        
+        .clickable-image {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .clickable-image:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -254,11 +291,41 @@
         let products = [];
         let currentEditIndex = -1;
         
+        // ============= دالة لإصلاح روابط GitHub =============
+        function fixGitHubImageUrl(url) {
+            if (!url || url.trim() === '') {
+                return '';
+            }
+            
+            // إذا كان الرابط يشير إلى صفحة GitHub (يحتوي على /blob/)
+            if (url.includes('github.com') && url.includes('/blob/')) {
+                // تحويل من رابط blob إلى رابط raw
+                url = url.replace('/blob/', '/raw/');
+            }
+            
+            // إذا كان الرابط من GitHub ولم يكن raw
+            if (url.includes('github.com') && !url.includes('/raw/')) {
+                // تحويل إلى رابط raw مباشر
+                url = url.replace('github.com', 'raw.githubusercontent.com');
+                url = url.replace('/blob/', '/');
+            }
+            
+            return url;
+        }
+        
         // ============= تحميل البيانات =============
         async function loadData() {
             try {
                 const response = await fetch('data.json');
                 products = await response.json();
+                
+                // إصلاح روابط الصور عند التحميل
+                products.forEach(product => {
+                    if (product.img && product.img.trim() !== '') {
+                        product.img = fixGitHubImageUrl(product.img);
+                    }
+                });
+                
                 renderAll();
             } catch (error) {
                 console.error('خطأ في تحميل البيانات:', error);
@@ -271,7 +338,7 @@
         function renderAll() {
             renderProducts();
             renderAdminTable();
-            updateOutput(); // ✅ هذا السطر هو الأهم!
+            updateOutput();
         }
         
         // ============= عرض المنتجات للزبائن =============
@@ -291,16 +358,21 @@
             
             let html = '';
             products.forEach((product, index) => {
-                const imgSrc = product.img || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNMzIgMzRMMjYgNDBIMzhMMzIgMzRaTTMyIDMyTDM4IDI2SDI2TDMyIDMyWk0zMiAzNEMzMC4zNDMxIDM0IDI5IDMyLjY1NjkgMjkgMzFDMjkgMjkuMzQzMSAzMC4zNDMxIDI4IDMyIDI4QzMzLjY1NjkgMjggMzUgMjkuMzQzMSAzNSAzMUMzNSAzMi42NTY5IDMzLjY1NjkgMzQgMzIgMzRaIiBmaWxsPSIjQzBDMEMwIi8+PC9zdmc+';
+                const hasImage = product.img && product.img.trim() !== '';
+                const imgSrc = hasImage ? product.img : '';
                 
                 html += `
                     <tr class="border-b hover:bg-gray-50" data-product-name="${product.name.toLowerCase()}">
                         <td class="p-3">
                             <div class="flex items-center justify-center">
-                                <img src="${imgSrc}" 
-                                     alt="${product.name}"
-                                     class="w-12 h-12 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                                     onclick="zoomProductImage('${product.img || ''}', '${product.name}')">
+                                ${hasImage ? 
+                                    `<img src="${imgSrc}" 
+                                         alt="${product.name}"
+                                         class="product-image clickable-image"
+                                         onclick="zoomProductImage('${imgSrc}', '${product.name}')"
+                                         onerror="this.onerror=null; this.src=''; this.classList.add('image-placeholder'); this.classList.remove('clickable-image'); this.parentElement.innerHTML='<div class=\"product-image image-placeholder\">بدون صورة</div>';">` :
+                                    `<div class="product-image image-placeholder">بدون صورة</div>`
+                                }
                             </div>
                         </td>
                         <td class="p-3">
@@ -338,16 +410,21 @@
             
             let html = '';
             products.forEach((product, index) => {
-                const imgSrc = product.img || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNMTYgMTdMMTMgMjBIMTlMMTYgMTdaTTE2IDE2TDE5IDEzSDEzTDE2IDE2Wk0xNiAxN0MxNS4xNzE2IDE3IDE0LjUgMTYuMzI4NCAxNC41IDE1LjVDMTQuNSAxNC42NzE2IDE1LjE3MTYgMTQgMTYgMTRDMTYuODI4NCAxNCAxNy41IDE0LjY3MTYgMTcuNSAxNS41QzE3LjUgMTYuMzI4NCAxNi44Mjg0IDE3IDE2IDE3WiIgZmlsbD0iI0MwQzBDMCIvPjwvc3ZnPg==';
+                const hasImage = product.img && product.img.trim() !== '';
+                const imgSrc = hasImage ? product.img : '';
                 
                 html += `
                     <tr class="border-b hover:bg-gray-50">
                         <td class="p-2 text-center text-gray-500">${index + 1}</td>
                         <td class="p-2">
-                            <img src="${imgSrc}" 
-                                 class="w-10 h-10 object-cover rounded cursor-pointer"
-                                 onclick="zoomProductImage('${product.img || ''}', '${product.name}')"
-                                 title="انقر لتكبير الصورة">
+                            ${hasImage ? 
+                                `<img src="${imgSrc}" 
+                                     class="admin-image clickable-image"
+                                     onclick="zoomProductImage('${imgSrc}', '${product.name}')"
+                                     title="انقر لتكبير الصورة"
+                                     onerror="this.onerror=null; this.src=''; this.classList.add('image-placeholder'); this.classList.remove('clickable-image'); this.outerHTML='<div class=\"admin-image image-placeholder text-xs flex items-center justify-center\">لا توجد</div>';">` :
+                                `<div class="admin-image image-placeholder text-xs flex items-center justify-center">لا توجد</div>`
+                            }
                         </td>
                         <td class="p-2">
                             <input type="text" 
@@ -573,7 +650,10 @@
         
         // ============= تكبير الصورة للزبائن =============
         function zoomProductImage(imageSrc, productName) {
-            if (!imageSrc) return;
+            if (!imageSrc || imageSrc.trim() === '') {
+                alert('لا توجد صورة لهذا المنتج');
+                return;
+            }
             
             const modal = document.getElementById('zoomModal');
             const modalImg = document.getElementById('zoomedImage');
@@ -582,6 +662,12 @@
             modalImg.src = imageSrc;
             caption.textContent = productName;
             modal.style.display = 'flex';
+            
+            // إضافة حدث لمعالجة أخطاء تحميل الصورة
+            modalImg.onerror = function() {
+                alert('تعذر تحميل الصورة. قد يكون الرابط غير صحيح.');
+                closeZoomModal();
+            };
             
             modal.onclick = function(e) {
                 if (e.target === modal) closeZoomModal();
