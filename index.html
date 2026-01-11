@@ -7,25 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
-        
-        /* تحميل الخط أولاً - الأهم للسرعة */
         body { 
             font-family: 'Cairo', sans-serif; 
             background: #f8fafc; 
             color: #0f172a; 
-            margin: 0;
-            padding: 0;
-            opacity: 0;
-            animation: fadeIn 0.3s forwards;
         }
-        
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-        
         .premium-header { 
             background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); 
-            padding: 2rem 0 4rem; 
+            padding: 3rem 0 5rem; 
         }
         .header-line { 
             height: 4px; 
@@ -44,468 +33,251 @@
             border-radius: 16px; 
             overflow: hidden; 
             background: white; 
-            min-height: 300px; /* ارتفاع أدنى لمنع القفز */
         }
         .price-text { 
             color: #1e40af; 
             font-weight: 800; 
         }
-        
-        /* تحسينات الأداء */
-        * {
-            box-sizing: border-box;
-        }
-        
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-        
-        /* إخفاء العناصر المتباطئة تدريجياً */
-        .loading {
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .loaded {
-            opacity: 1;
-        }
-        
-        /* نافذة تكبير الصورة */
-        .image-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .modal-image {
-            max-width: 90%;
-            max-height: 85vh;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            object-fit: contain;
-        }
-        
-        .close-modal {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            color: white;
-            font-size: 35px;
-            cursor: pointer;
-            background: rgba(0,0,0,0.6);
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            z-index: 1001;
-        }
-        
-        .close-modal:hover {
-            background: rgba(255,255,255,0.2);
-            transform: scale(1.1);
-        }
-        
-        .modal-caption {
-            position: absolute;
-            bottom: 25px;
-            color: white;
-            text-align: center;
-            width: 100%;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 10px 20px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 8px;
-            margin: 0 20px;
-        }
     </style>
 </head>
 <body>
 
-    <header class="premium-header text-white pt-10 pb-14 text-center" onclick="loginAdmin()">
+    <header class="premium-header text-white pt-12 pb-16 text-center" onclick="loginAdmin()">
         <div class="container mx-auto px-4">
             <h1 class="text-3xl md:text-4xl font-black mb-2">شركة عامر دهيمش</h1>
             <div class="header-line"></div>
         </div>
     </header>
 
-    <div class="container mx-auto px-4 md:px-6 max-w-6xl -mt-6 mb-6">
+    <div class="container mx-auto px-4 md:px-6 max-w-6xl -mt-8 mb-8">
         
         <!-- لوحة الإدارة المخفية -->
-        <div id="adminPanel" class="hidden bg-white rounded-xl shadow-lg p-4 mb-4 border border-gray-200">
-            <!-- ... نفس محتوى لوحة الإدارة السابق ... -->
+        <div id="adminPanel" class="hidden bg-white rounded-xl shadow-lg p-4 mb-6 border border-gray-200">
+            <!-- تبسيط لوحة التحكم -->
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-gray-800">لوحة التحكم</h2>
+                <button onclick="toggleAdmin()" class="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            
+            <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                <h3 class="font-bold text-blue-800 mb-2">إضافة منتج</h3>
+                <div class="space-y-3">
+                    <input type="text" id="itemName" placeholder="اسم المنتج" class="w-full p-2 rounded-lg border">
+                    <input type="text" id="itemPack" placeholder="التعبئة" class="w-full p-2 rounded-lg border">
+                    <input type="text" id="itemPrice" placeholder="السعر" class="w-full p-2 rounded-lg border font-bold">
+                    <input type="file" id="itemFile" accept="image/*" class="w-full text-sm">
+                </div>
+                <button onclick="addItem()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold mt-3">
+                    إضافة منتج
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <h3 class="font-bold text-gray-800 mb-2">المنتجات</h3>
+                <div id="adminTableBody" class="space-y-2 max-h-60 overflow-y-auto"></div>
+            </div>
         </div>
 
         <!-- شريط البحث -->
-        <div class="mb-4">
+        <div class="mb-6">
             <div class="relative max-w-xl mx-auto">
                 <input type="text" id="searchInput" placeholder="🔍 ابحث عن صنف..." 
-                       class="w-full p-3 pr-10 rounded-lg border outline-none focus:ring-2 focus:ring-blue-300">
+                       class="w-full p-4 pr-12 rounded-xl shadow border outline-none">
             </div>
         </div>
 
         <!-- جدول المنتجات -->
-        <div class="table-container shadow">
+        <div class="table-container shadow-lg">
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="sticky-header">
                         <tr class="bg-gray-50 border-b">
-                            <th class="p-3 text-gray-600 font-bold text-sm">الصورة</th>
-                            <th class="p-3 text-gray-600 font-bold text-sm">الصنف</th>
-                            <th class="p-3 text-gray-600 font-bold text-sm">التعبئة</th>
-                            <th class="p-3 text-gray-600 font-bold text-sm">السعر</th>
+                            <th class="p-4 text-gray-600 font-bold text-sm">الصورة</th>
+                            <th class="p-4 text-gray-600 font-bold text-sm">الصنف</th>
+                            <th class="p-4 text-gray-600 font-bold text-sm">التعبئة</th>
+                            <th class="p-4 text-gray-600 font-bold text-sm">السعر</th>
                         </tr>
                     </thead>
                     <tbody id="productsTable">
-                        <!-- سيملأه الجافاسكريبت -->
+                        <!-- البيانات تظهر هنا -->
                     </tbody>
                 </table>
             </div>
         </div>
-        
-        <!-- مؤشر التحميل البسيط -->
-        <div id="loading" class="text-center py-8">
-            <div class="inline-block animate-pulse">
-                <div class="h-8 w-8 bg-blue-600 rounded-full mx-auto mb-2"></div>
-                <p class="text-gray-500 text-sm">جاري تحميل المنتجات...</p>
-            </div>
-        </div>
     </div>
 
-    <!-- النوافذ المنبثقة (نفسها) -->
-    <div id="imageEditModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80">
-        <!-- ... نفس محتوى نافذة التعديل ... -->
-    </div>
-
-    <div id="zoomModal" class="image-modal">
-        <!-- ... نفس محتوى نافذة التكبير ... -->
+    <!-- نافذة تكبير الصورة -->
+    <div id="zoomModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/95">
+        <div class="close-modal" onclick="closeZoomModal()">×</div>
+        <img id="zoomedImage" class="max-w-full max-h-[80vh] rounded-lg" src="" alt="">
+        <div id="zoomCaption" class="text-white text-center mt-3 text-lg font-bold"></div>
     </div>
 
     <script>
-        // ============= الحل النهائي للسرعة =============
+        // ============= أبسط حل للسرعة =============
         
-        // 1. تحميل البيانات فوراً عند فتح الصفحة
-        document.addEventListener('DOMContentLoaded', function() {
-            // تحميل واجهة المستخدم أولاً
-            document.body.style.opacity = '1';
-            
-            // بدء تحميل البيانات بعد تحميل الصفحة مباشرة
-            setTimeout(loadData, 50);
+        // 1. تحميل البيانات فوراً
+        window.addEventListener('load', function() {
+            loadDataFast();
         });
         
         let products = [];
-        let currentEditIndex = -1;
         
-        // 2. دالة تحميل البيانات المحسنة للسرعة
-        async function loadData() {
-            // عرض رسالة التحميل لفترة قصيرة جداً
-            document.getElementById('loading').classList.remove('hidden');
-            
+        // 2. أبسط دالة تحميل ممكنة
+        async function loadDataFast() {
             try {
-                // المحاولة 1: التخزين المحلي (فوري)
-                const cached = getCachedData();
-                if (cached) {
-                    products = cached;
-                    renderProductsInstantly(); // عرض فوري
-                    document.getElementById('loading').classList.add('hidden');
-                }
+                // جلب البيانات مباشرة بدون تأخير
+                const response = await fetch('data.json');
+                products = await response.json();
                 
-                // المحاولة 2: جلب البيانات من السيرفر (في الخلفية)
-                fetch('data.json?t=' + Date.now())
-                    .then(response => {
-                        if (!response.ok) throw new Error();
-                        return response.json();
-                    })
-                    .then(freshData => {
-                        products = freshData;
-                        cacheData(freshData); // تخزين للمرة القادمة
-                        
-                        // إذا كانت البيانات القديمة مختلفة، تحديث العرض
-                        if (!cached || JSON.stringify(cached) !== JSON.stringify(freshData)) {
-                            renderProductsInstantly();
-                        }
-                        
-                        document.getElementById('loading').classList.add('hidden');
-                    })
-                    .catch(() => {
-                        // إذا فشل التحميل، نعتمد على البيانات المخزنة
-                        if (products.length === 0) {
-                            document.getElementById('loading').innerHTML = 
-                                '<p class="text-red-500">⚠️ تعذر تحميل البيانات</p>';
-                        }
-                    });
-                    
+                // عرض البيانات فوراً
+                showProductsFast();
+                
             } catch (error) {
-                document.getElementById('loading').classList.add('hidden');
-            }
-        }
-        
-        // 3. نظام التخزين المؤقت السريع
-        function cacheData(data) {
-            try {
-                // تخزين لمدة 15 دقيقة فقط
-                const cache = {
-                    data: data,
-                    timestamp: Date.now(),
-                    expiry: 15 * 60 * 1000 // 15 دقيقة
-                };
-                localStorage.setItem('products_cache', JSON.stringify(cache));
-            } catch (e) {
-                // تجاهل الأخطاء في التخزين المحلي
-            }
-        }
-        
-        function getCachedData() {
-            try {
-                const cached = localStorage.getItem('products_cache');
-                if (!cached) return null;
-                
-                const cache = JSON.parse(cached);
-                const age = Date.now() - cache.timestamp;
-                
-                if (age < cache.expiry) {
-                    return cache.data;
-                }
-            } catch (e) {
-                return null;
-            }
-            return null;
-        }
-        
-        // 4. عرض المنتجات بسرعة فائقة
-        function renderProductsInstantly() {
-            const table = document.getElementById('productsTable');
-            const loading = document.getElementById('loading');
-            
-            if (products.length === 0) {
-                table.innerHTML = `
+                // إذا فشل التحميل، عرض رسالة بسيطة
+                document.getElementById('productsTable').innerHTML = `
                     <tr>
-                        <td colspan="4" class="p-8 text-center text-gray-400">
-                            لا توجد منتجات مضافة بعد
+                        <td colspan="4" class="p-8 text-center text-gray-500">
+                            جاري تحميل البيانات...
                         </td>
                     </tr>
                 `;
-                loading.classList.add('hidden');
-                return;
+                
+                // محاولة أخرى بعد ثانيتين
+                setTimeout(loadDataFast, 2000);
             }
-            
-            // استخدام DocumentFragment لتحسين الأداء
-            const fragment = document.createDocumentFragment();
-            
-            // عرض أول 10 منتجات فوراً
-            const immediateProducts = products.slice(0, 10);
-            
-            immediateProducts.forEach((product, index) => {
-                const row = createProductRow(product, index);
-                fragment.appendChild(row);
-            });
-            
-            table.innerHTML = '';
-            table.appendChild(fragment);
-            
-            // إخفاء مؤشر التحميل فوراً
-            loading.classList.add('hidden');
-            
-            // تحميل بقية المنتجات في الخلفية
-            setTimeout(() => {
-                renderRemainingProducts();
-            }, 100);
         }
         
-        function renderRemainingProducts() {
+        // 3. أبسط دالة لعرض المنتجات
+        function showProductsFast() {
             const table = document.getElementById('productsTable');
+            let html = '';
             
-            // عرض بقية المنتجات (من 11 إلى النهاية)
-            if (products.length > 10) {
-                for (let i = 10; i < products.length; i++) {
-                    const row = createProductRow(products[i], i);
-                    table.appendChild(row);
-                }
+            for (let i = 0; i < products.length; i++) {
+                const product = products[i];
+                
+                html += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">
+                            <img src="${product.img || ''}" 
+                                 alt="${product.name}"
+                                 class="w-12 h-12 object-cover rounded-lg cursor-pointer"
+                                 onclick="zoomImage('${product.img || ''}', '${product.name}')"
+                                 onerror="this.style.display='none'">
+                        </td>
+                        <td class="p-3 font-medium text-gray-800">${product.name}</td>
+                        <td class="p-3">
+                            <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
+                                ${product.pack || '---'}
+                            </span>
+                        </td>
+                        <td class="p-3 font-bold text-blue-700">${product.price}</td>
+                    </tr>
+                `;
             }
             
-            renderAdminTable();
-            updateOutput();
+            table.innerHTML = html;
         }
         
-        // 5. إنشاء صف منتج بشكل منفصل لتحسين الكفاءة
-        function createProductRow(product, index) {
-            const row = document.createElement('tr');
-            row.className = 'border-b hover:bg-gray-50 transition-colors product-row';
-            row.dataset.productName = product.name.toLowerCase();
-            
-            const imgSrc = product.img || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNMzIgMzRMMjYgNDBIMzhMMzIgMzRaTTMyIDMyTDM4IDI2SDI2TDMyIDMyWk0zMiAzNEMzMC4zNDMxIDM0IDI5IDMyLjY1NjkgMjkgMzFDMjkgMjkuMzQzMSAzMC4zNDMxIDI4IDMyIDI4QzMzLjY1NjkgMjggMzUgMjkuMzQzMSAzNSAzMUMzNSAzMi42NTY5IDMzLjY1NjkgMzQgMzIgMzRaIiBmaWxsPSIjQzBDMEMwIi8+PC9zdmc+';
-            
-            const clickHandler = isAdminPanelOpen() ? 
-                `editImage(${index})` : 
-                `zoomProductImage('${product.img}', '${product.name}')`;
-            
-            row.innerHTML = `
-                <td class="p-3">
-                    <div class="flex items-center justify-center">
-                        <img src="${imgSrc}" 
-                             alt="${product.name}"
-                             class="w-12 h-12 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                             onclick="${clickHandler}"
-                             loading="lazy">
-                    </div>
-                </td>
-                <td class="p-3">
-                    <div class="font-medium text-gray-800">${product.name}</div>
-                </td>
-                <td class="p-3">
-                    <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
-                        ${product.pack || '---'}
-                    </span>
-                </td>
-                <td class="p-3">
-                    <span class="price-text font-bold">${product.price}</span>
-                </td>
-            `;
-            
-            return row;
-        }
-        
-        // 6. البحث الفوري
+        // 4. البحث البسيط
         function searchProducts() {
-            const query = document.getElementById('searchInput').value.trim().toLowerCase();
-            const rows = document.querySelectorAll('#productsTable tr.product-row');
-            
-            if (!query) {
-                rows.forEach(row => row.style.display = '');
-                return;
-            }
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#productsTable tr');
             
             rows.forEach(row => {
-                const productName = row.dataset.productName;
-                if (productName && productName.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
+                const cells = row.querySelectorAll('td');
+                if (cells.length > 1) {
+                    const productName = cells[1].textContent.toLowerCase();
+                    row.style.display = productName.includes(query) ? '' : 'none';
                 }
             });
         }
         
-        // 7. بقية الدوال (بدون تغيير)
-        function isAdminPanelOpen() {
-            return !document.getElementById('adminPanel').classList.contains('hidden');
-        }
-        
-        function zoomProductImage(imageSrc, productName) {
-            const modal = document.getElementById('zoomModal');
-            const modalImg = document.getElementById('zoomedImage');
-            const caption = document.getElementById('zoomCaption');
+        // 5. تكبير الصورة البسيط
+        function zoomImage(src, name) {
+            if (!src) return;
             
-            modalImg.src = imageSrc || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgdmlld0JveD0iMCAwIDI1NiAyNTYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNMTI4IDEzMkwxMDQgMTYwSDE1MkwxMjggMTMyWk0xMjggMTI4TDE1MiAxMDRIMTA0TDEyOCAxMjhaTTEyOCAxMzJDMjUuMzQzMSAxMzIgMTI1IDEzMC42NTcgMTI1IDEyOEMxMjUgMTI1LjM0MyAxMjUuMzQzIDEyNSAxMjggMTI1QzEzMC42NTcgMTI1IDEzMSAxMjUuMzQzIDEzMSAxMjhDMTMxIDEzMC42NTcgMTMwLjY1NyAxMzIgMTI4IDEzMloiIGZpbGw9IiNDMEMwQzAiLz48L3N2Zz4=';
-            caption.textContent = productName;
-            modal.style.display = 'flex';
-            
-            modal.onclick = function(e) {
-                if (e.target === modal) closeZoomModal();
-            };
-            
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') closeZoomModal();
-            });
+            document.getElementById('zoomedImage').src = src;
+            document.getElementById('zoomCaption').textContent = name;
+            document.getElementById('zoomModal').style.display = 'flex';
         }
         
         function closeZoomModal() {
             document.getElementById('zoomModal').style.display = 'none';
         }
         
-        // ... بقية الدوال كما هي بدون تغيير ...
-        
-        function renderAdminTable() {
-            const table = document.getElementById('adminTableBody');
-            const fragment = document.createDocumentFragment();
-            
-            products.forEach((product, index) => {
-                const row = document.createElement('tr');
-                row.className = 'border-b hover:bg-gray-50';
-                
-                row.innerHTML = `
-                    <td class="p-2">
-                        <img src="${product.img || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIGZpbGw9IiNGMEYwRjAiLz48cGF0aCBkPSJNMTYgMTdMMTMgMjBIMTlMMTYgMTdaTTE2IDE2TDE5IDEzSDEzTDE2IDE2Wk0xNiAxN0MxNS4xNzE2IDE3IDE0LjUgMTYuMzI4NCAxNC41IDE1LjVDMTQuNSAxNC42NzE2IDE1LjE3MTYgMTQgMTYgMTRDMTYuODI4NCAxNCAxNy41IDE0LjY3MTYgMTcuNSAxNS41QzE3LjUgMTYuMzI4NCAxNi44Mjg0IDE3IDE2IDE3WiIgZmlsbD0iI0MwQzBDMCIvPjwvc3ZnPg=='}" 
-                             class="w-8 h-8 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                             onclick="zoomProductImage('${product.img}', '${product.name}')"
-                             style="cursor: pointer;"
-                             title="انقر لتكبير الصورة">
-                    </td>
-                    <td class="p-2">
-                        <input type="text" 
-                               value="${product.name}" 
-                               oninput="updateProductField(${index}, 'name', this.value)"
-                               class="w-full p-1 border rounded text-sm">
-                    </td>
-                    <td class="p-2">
-                        <input type="text" 
-                               value="${product.pack || ''}" 
-                               oninput="updateProductField(${index}, 'pack', this.value)"
-                               class="w-full p-1 border rounded text-sm">
-                    </td>
-                    <td class="p-2">
-                        <input type="text" 
-                               value="${product.price}" 
-                               oninput="updateProductField(${index}, 'price', this.value)"
-                               class="w-full p-1 border rounded text-sm font-bold">
-                    </td>
-                    <td class="p-2">
-                        <button onclick="editImage(${index})" class="text-blue-600 hover:text-blue-800 text-sm">
-                            تغيير الصورة
-                        </button>
-                    </td>
-                `;
-                
-                fragment.appendChild(row);
-            });
-            
-            table.innerHTML = '';
-            table.appendChild(fragment);
-        }
-        
-        // 8. إضافة حدث البحث
-        document.getElementById('searchInput').addEventListener('input', searchProducts);
-        
-        // 9. دالة لتحديث الحقول (كما هي)
-        function updateProductField(index, field, value) {
-            products[index][field] = value;
-            cacheData(products);
-            updateOutput();
-            renderProductsInstantly();
-        }
-        
-        function updateOutput() {
-            const output = document.getElementById('outputJson');
-            if (output) {
-                output.value = JSON.stringify(products, null, 2);
-            }
-        }
-        
-        // 10. دالة تسجيل الدخول (كما هي)
+        // 6. إدارة بسيطة
         function loginAdmin() {
-            const password = prompt('🔐 أدخل كلمة المرور للإدارة:');
+            const password = prompt('كلمة المرور:');
             if (password === 'admin123') {
-                toggleAdmin();
-            } else if (password) {
-                alert('❌ كلمة المرور غير صحيحة');
+                document.getElementById('adminPanel').classList.toggle('hidden');
             }
         }
         
         function toggleAdmin() {
-            const isHidden = document.getElementById('adminPanel').classList.toggle('hidden');
-            renderProductsInstantly();
+            document.getElementById('adminPanel').classList.toggle('hidden');
         }
+        
+        function addItem() {
+            const name = document.getElementById('itemName').value;
+            const pack = document.getElementById('itemPack').value;
+            const price = document.getElementById('itemPrice').value;
+            
+            if (name && price) {
+                products.unshift({
+                    name: name,
+                    pack: pack,
+                    price: price,
+                    img: ''
+                });
+                
+                showProductsFast();
+                
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemPack').value = '';
+                document.getElementById('itemPrice').value = '';
+                document.getElementById('itemFile').value = '';
+            }
+        }
+        
+        // 7. إضافة حدث البحث
+        document.getElementById('searchInput').addEventListener('input', searchProducts);
+        
+        // 8. إغلاق النافذة بالزر ESC أو النقر خارجها
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeZoomModal();
+        });
+        
+        document.getElementById('zoomModal').addEventListener('click', function(e) {
+            if (e.target === this) closeZoomModal();
+        });
+        
+        // إضافة بعض الأنماط البسيطة
+        const style = document.createElement('style');
+        style.textContent = `
+            .close-modal {
+                position: absolute;
+                top: 20px;
+                left: 20px;
+                color: white;
+                font-size: 30px;
+                cursor: pointer;
+                background: rgba(0,0,0,0.5);
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .close-modal:hover {
+                background: rgba(255,255,255,0.2);
+            }
+            #zoomModal {
+                display: none;
+            }
+        `;
+        document.head.appendChild(style);
         
     </script>
 </body>
